@@ -1,0 +1,3 @@
+-Dplatform5.static.resourcesRoot=./../webapp -Xms512m -Xmx512m
+-Dconfig.file=..\conf\application.conf
+-Dfile.encoding=UTF-8
