@@ -4,13 +4,14 @@ import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.util.Timeout
 import akka.pattern._
 import com.typesafe.scalalogging.LazyLogging
-import sevts.server.remote.Message.AutoLoginMessage
-import sevts.server.remote.TerminalMessage.TerminalPushMessage
 import sevts.terminal.RootActors
 import sevts.terminal.actors.readers.ReadersActor
 import sevts.terminal.config.Settings
 import sevts.terminal.networking.AppServer.ServerEvent
 import sevts.terminal.actors.scanners.ScannersActor
+import sevts.terminal.protocol.Message.AutoLoginMessage
+import sevts.terminal.protocol.TerminalMessage.TerminalPushMessage
+
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.control.NonFatal

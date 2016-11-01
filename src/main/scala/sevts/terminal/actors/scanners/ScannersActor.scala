@@ -10,8 +10,8 @@ import sevts.terminal.RootActors
 import sevts.terminal.actors.format.{FormatActor, FormatsActor}
 import sevts.terminal.config.Settings
 import sevts.server.domain.{FormField, Id}
-import sevts.server.remote.Message.SerialPortMessage
-import sevts.server.remote.Reaction
+import sevts.terminal.protocol.Message.SerialPortMessage
+import sevts.terminal.protocol.Reaction
 
 import collection.JavaConverters._
 import scala.concurrent.Future

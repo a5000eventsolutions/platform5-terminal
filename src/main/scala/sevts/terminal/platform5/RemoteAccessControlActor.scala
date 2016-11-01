@@ -8,13 +8,11 @@ import sevts.terminal.config.Settings
 import sevts.terminal.platform5.RemoteAccessControlActor._
 import akka.pattern._
 import akka.util.Timeout
-import sevts.server.protocol.ServerMessage.PushMessageToTerminal
 import sevts.server.protocol.{EventType, ServerResponseDetails}
 import sevts.server.protocol.printing.Protocol.{TerminalRegistered, _}
-import sevts.server.remote.Message.TerminalEPCEvent
-import sevts.server.remote.TerminalMessage
-import sevts.server.remote.TerminalMessage.TerminalPushMessage
 import sevts.terminal.actors.scanners.ScannersActor
+import sevts.terminal.protocol.TerminalMessage
+import sevts.terminal.protocol.TerminalMessage.TerminalPushMessage
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
