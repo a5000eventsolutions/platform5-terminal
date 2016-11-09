@@ -1,15 +1,13 @@
 package sevts.terminal.platform5
 
 import java.awt.print.{Book, PageFormat, Paper, PrinterJob}
-import java.io.{ByteArrayInputStream, File}
-import java.nio.file.{Files, Paths}
 import javax.print.{PrintService, PrintServiceLookup}
 
 import akka.actor._
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.printing.PDFPrintable
-import sevts.server.domain.{DocumentRecord, Id, ME, Terminal}
+import sevts.server.domain.{DocumentRecord, ME}
 import sevts.terminal.config.Settings
 
 import scala.concurrent.Future
@@ -19,7 +17,8 @@ import scala.language.postfixOps
 import scala.util.control.NonFatal
 import akka.pattern._
 import akka.util.Timeout
-import sevts.server.protocol.printing.Protocol._
+import sevts.remote.protocol.Protocol._
+
 
 object RemotePrintingActor {
 
@@ -87,8 +86,8 @@ class RemotePrintingActor(settings: Settings) extends Actor with LazyLogging {
      // val terminalId = Id[Terminal](settings.autoLoginConfig.terminal)
       actor ! RegisterTerminal(settings.autoLoginConfig.terminal)
 
-    case TerminalRegistered ⇒
-      logger.info("Print terminal registered on remote server")
+    case TerminalRegistered(id) ⇒
+      logger.info(s"Print terminal id=`${id.value}` registered on remote server")
 
     case p@PrintFile(terminal, badge, data) ⇒
       logger.info("Print file command received")
@@ -113,6 +112,14 @@ class RemotePrintingActor(settings: Settings) extends Actor with LazyLogging {
       logger.error("Trying reconnect")
       context.become(identifying)
       sendIdentifyRequest()
+
+    case AccessDenied ⇒
+      logger.error(s"Access denied for terminal with name `${settings.autoLoginConfig.terminal}`")
+      logger.error("Stopping terminl process..")
+      context.system.terminate()
+
+    case unknown ⇒
+      logger.error(s"Unknown message ${unknown.toString}")
 
   }
 

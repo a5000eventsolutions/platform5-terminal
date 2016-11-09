@@ -7,8 +7,8 @@ import akka.pattern._
 import scala.concurrent.duration._
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import sevts.server.remote.Message.TerminalEPCEvent
-import sevts.terminal.RootActors
+import sevts.remote.protocol.TerminalMessage.TerminalEPCEvent
+import sevts.terminal.Injector
 import sevts.terminal.config.Settings
 import sevts.terminal.config.Settings.{DeviceConfig, DeviceDriverType}
 
@@ -16,8 +16,8 @@ import scala.util.control.NonFatal
 
 object ReadersActor {
 
-  def props(settings: Settings, rootActors: RootActors): Props = {
-    Props(classOf[ReadersActor], settings, rootActors)
+  def props(settings: Settings, Injector: Injector): Props = {
+    Props(classOf[ReadersActor], settings, Injector)
   }
 
   sealed trait DeviceEvent
@@ -44,7 +44,7 @@ object ReadersActor {
 
 }
 
-case class ReadersActor(settings: Settings, rootActors: RootActors) extends Actor with LazyLogging {
+case class ReadersActor(settings: Settings, Injector: Injector) extends Actor with LazyLogging {
   import ReadersActor._
 
   private var listeners = Set[ActorRef]()
@@ -74,7 +74,7 @@ case class ReadersActor(settings: Settings, rootActors: RootActors) extends Acto
 
     case msg: Rfid9809ReaderActor.Response ⇒
       val response = TerminalEPCEvent(msg.toString)
-      rootActors.remoteAccessControlActor ! response
+      //Injector.remoteAccessControlActor ! response
 
     case Request.StartDevices ⇒
       settings.terminalConfig.devices

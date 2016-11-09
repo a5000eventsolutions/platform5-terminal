@@ -4,7 +4,7 @@ import java.awt.print.PageFormat
 
 import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.LazyLogging
-import sevts.server.remote.Reaction
+import sevts.remote.protocol.Reaction
 import sevts.terminal.config.Settings._
 
 import collection.JavaConverters._

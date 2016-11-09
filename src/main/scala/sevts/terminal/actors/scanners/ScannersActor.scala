@@ -4,22 +4,22 @@ import akka.actor.{Actor, Props}
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
+import sevts.remote.protocol.Reaction
+import sevts.remote.protocol.TerminalMessage.TerminalReaderMessage
 
 import scala.concurrent.duration._
-import sevts.terminal.RootActors
+import sevts.terminal.Injector
 import sevts.terminal.actors.format.{FormatActor, FormatsActor}
 import sevts.terminal.config.Settings
 import sevts.server.domain.{FormField, Id}
-import sevts.terminal.protocol.Message.SerialPortMessage
-import sevts.terminal.protocol.Reaction
 
 import collection.JavaConverters._
 import scala.concurrent.Future
 
 object ScannersActor {
 
-  def props(settings: Settings, rootActors: RootActors): Props = {
-    Props(classOf[ScannersActor], settings, rootActors)
+  def props(injector: Injector): Props = {
+    Props(classOf[ScannersActor], injector)
   }
 
   sealed trait Request
@@ -30,12 +30,12 @@ object ScannersActor {
 
   sealed trait Response
   object Response {
-    case class DataProcessed(msg: SerialPortMessage) extends Response
+    case class DataProcessed(msg: TerminalReaderMessage) extends Response
     case object Failure extends Response
   }
 }
 
-class ScannersActor(settings: Settings, rootActors: RootActors) extends Actor with LazyLogging {
+class ScannersActor(injector: Injector) extends Actor with LazyLogging {
   import ScannersActor._
 
   implicit val ec = context.dispatcher
@@ -43,10 +43,10 @@ class ScannersActor(settings: Settings, rootActors: RootActors) extends Actor wi
 
   override def receive: Receive = {
     case Request.DataReceived(deviceName, data) ⇒
-      val scanners = settings.terminalConfig.scanners
+      val scanners = injector.settings.terminalConfig.scanners
       (scanners.find(s ⇒ s.device.name == deviceName) match {
         case Some(scanner) ⇒
-          (rootActors.formatsActor ? FormatsActor.Request.Process(scanner, data)) map {
+          (injector.formatsActor ? FormatsActor.Request.Process(scanner, data)) map {
             case FormatActor.Response.Result(processed) ⇒
               val processedValue = processed match {
                 case FormatsActor.Processed.NumericData(value) ⇒ value.toString
@@ -59,13 +59,13 @@ class ScannersActor(settings: Settings, rootActors: RootActors) extends Actor wi
                 scanner.parameters.getBoolean("badgeSearch")
               } else false
 
-              Response.DataProcessed(SerialPortMessage(
+              Response.DataProcessed(TerminalReaderMessage(
                 reaction = scanner.reaction.toReaction,
                 fieldId = scanner.parameters.getString("dataField"),
                 formId = scanner.parameters.getString("formId"),
                 value = processedValue,
                 badgeSearch = Some(badgeSearch),
-                formList = scanner.parameters.getStringList("formList").asScala.map(id ⇒ Id.M[FormField](id))
+                formFieldsList = scanner.parameters.getStringList("formList").asScala.map(id ⇒ Id[FormField](id))
               ))
           }
         case None ⇒
@@ -74,11 +74,11 @@ class ScannersActor(settings: Settings, rootActors: RootActors) extends Actor wi
       }) pipeTo sender()
 
     case Request.EPCReceived(deviceName, data) ⇒
-      val scanners = settings.terminalConfig.scanners
+      val scanners = injector.settings.terminalConfig.scanners
       val stringData = data.map(_.toChar).mkString
       (scanners.find(s ⇒ s.device.name == deviceName) match {
         case Some(scanner) ⇒
-          (rootActors.formatsActor ? FormatsActor.Request.Process(scanner, stringData)) map {
+          (injector.formatsActor ? FormatsActor.Request.Process(scanner, stringData)) map {
             case FormatActor.Response.Result(processed) ⇒
               val processedValue = processed match {
                 case FormatsActor.Processed.NumericData(value) ⇒ value.toString
@@ -91,13 +91,13 @@ class ScannersActor(settings: Settings, rootActors: RootActors) extends Actor wi
                 scanner.parameters.getBoolean("badgeSearch")
               } else false
 
-              Response.DataProcessed(SerialPortMessage(
+              Response.DataProcessed(TerminalReaderMessage(
                 reaction = Reaction.OpenFormData,
                 fieldId = scanner.parameters.getString("dataField"),
                 formId = scanner.parameters.getString("formId"),
                 value = processedValue,
                 badgeSearch = Some(badgeSearch),
-                formList = Seq.empty[Id.M[FormField]]
+                formFieldsList = Seq.empty[Id[FormField]]
               ))
           }
         case None ⇒

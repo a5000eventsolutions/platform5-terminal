@@ -3,7 +3,7 @@ package sevts.terminal.networking
 import akka.actor.SupervisorStrategy.Restart
 import akka.actor._
 import com.typesafe.scalalogging.LazyLogging
-import sevts.terminal.RootActors
+import sevts.terminal.Injector
 import sevts.terminal.config.Settings
 import sevts.terminal.platform5.BrowserRunner
 
@@ -33,7 +33,7 @@ object AppServer extends LazyLogging {
   }
 
   private[AppServer] class StandardAppServer(val settings: Settings)(implicit val system: ActorSystem)
-    extends AppServer with Actor with LazyLogging with RootActors {
+    extends AppServer with Actor with LazyLogging with Injector {
 
     override val supervisorStrategy =
       OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {

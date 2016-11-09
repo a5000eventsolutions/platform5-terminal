@@ -1,7 +1,5 @@
 version := "1.0"
 
-scalaVersion := "2.11.8"
-
 lazy val commonSettings = Seq(
   organization := "sevts.platform5",
   version := "1.0",
