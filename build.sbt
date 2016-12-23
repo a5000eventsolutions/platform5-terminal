@@ -1,4 +1,13 @@
+import sbt.Keys.dependencyOverrides
+import sbt.ProjectRef
+
 version := "1.0"
+
+val protoFile = file("../platform5")
+val protocolRef = ProjectRef(protoFile, "protocol")
+
+val domainFile = file("../platform5")
+val domainRef = ProjectRef(domainFile, "domain")
 
 lazy val commonSettings = Seq(
   organization := "sevts.platform5",
@@ -33,4 +42,10 @@ lazy val terminal = (project in file("./"))
     }
   )
   .settings( commonSettings: _* )
-  .settings( libraryDependencies := Dependencies.terminal.value )
+  .settings(
+    libraryDependencies := Dependencies.terminal.value,
+    dependencyOverrides +=  "scala-lang.modules" % "scala-xml_2.12" % "1.0.6",
+    dependencyOverrides +=  "javax.activation" % "activation" % "1.1.1"
+  )
+  .dependsOn(protocolRef)
+  .dependsOn(domainRef)
