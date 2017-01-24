@@ -2,14 +2,12 @@ package sevts.terminal.platform5
 
 import java.awt.print.{Book, PageFormat, Paper, PrinterJob}
 import javax.print.{PrintService, PrintServiceLookup}
-
 import akka.actor._
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.printing.PDFPrintable
 import sevts.server.domain.{DocumentRecord, ME}
 import sevts.terminal.config.Settings
-
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration._
@@ -48,7 +46,7 @@ class RemotePrintingActor(settings: Settings) extends Actor with LazyLogging {
   def initPrinters() = {
     val printServices = PrintServiceLookup.lookupPrintServices(null, null)
     logger.info("==============================")
-    logger.info("     System printers list    ")
+    logger.info("     System printers list     ")
     logger.info("==============================")
     printServices foreach { service ⇒
       logger.info(service.getName)
@@ -83,7 +81,6 @@ class RemotePrintingActor(settings: Settings) extends Actor with LazyLogging {
   def active(actor: ActorRef): Receive = {
 
     case Warmup ⇒
-     // val terminalId = Id[Terminal](settings.autoLoginConfig.terminal)
       actor ! RegisterTerminal(settings.autoLoginConfig.terminal)
 
     case TerminalRegistered(id) ⇒
