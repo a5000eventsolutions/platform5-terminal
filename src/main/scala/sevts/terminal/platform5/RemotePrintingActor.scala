@@ -39,7 +39,7 @@ class RemotePrintingActor(settings: Settings) extends Actor with LazyLogging {
     context.setReceiveTimeout(3 seconds)
   }
 
-  val path = s"${settings.remoteServer.path}/user/printing-registry-actor"
+  val path = s"${settings.remoteServer.path}/user/root/printing-registry-actor"
 
   override def preStart() = {
     initPrinters()
