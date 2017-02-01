@@ -1,5 +1,3 @@
-import sbt.Keys.dependencyOverrides
-import sbt.ProjectRef
 
 version := "1.0"
 
