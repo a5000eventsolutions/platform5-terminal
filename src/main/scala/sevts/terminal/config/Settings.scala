@@ -1,8 +1,9 @@
 package sevts.terminal.config
 
 import java.awt.print.PageFormat
+import java.util.Map.Entry
 
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config._
 import com.typesafe.scalalogging.LazyLogging
 import sevts.remote.protocol.Reaction
 import sevts.terminal.config.Settings._
@@ -154,10 +155,30 @@ object Settings {
                          terminal: String)
   }
 
-  final case class PrinterConfig(config: Config) {
-    private val cfgOrientation = config.getString("pageOrientation")
-    val orientation = if(cfgOrientation == "portrait") PageFormat.PORTRAIT else PageFormat.LANDSCAPE
+  object PrinterConfig {
+
+    def apply(config: Config) = {
+      PrinterConfig(
+        enabled = config.getBoolean("enabled"),
+        page = PageConfig(config.getConfig("page")),
+        devices = Devices(config.getConfig("devices"))
+      )
+    }
+
+    case class PageConfig(config: Config) {
+      private val cfgOrientation = config.getString("orientation")
+      val orientation = if(cfgOrientation == "portrait") PageFormat.PORTRAIT else PageFormat.LANDSCAPE
+    }
+
+    case class Devices(config: Config) {
+      val list = config.entrySet().asScala.map { (entry: Entry[String, ConfigValue]) ⇒
+        entry.getKey → entry.getValue.unwrapped().asInstanceOf[String]
+      }.toMap
+    }
+    case class PrinterConfig(enabled: Boolean, page: PageConfig, devices: Devices)
   }
+
+
 
   object RemoteServer {
 
@@ -175,15 +196,12 @@ object Settings {
 
 class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
 
-  val printer = PrinterConfig(config.getConfig("platform5.printer"))
+  val printing = PrinterConfig(config.getConfig("platform5.printing"))
 
   val remoteEnabled = config.getBoolean("platform5.server.remote.enabled")
   val remoteServer = RemoteServer(config.getConfig("platform5.server.remote"))
 
   val accessControlEnabled = config.getBoolean("platform5.terminal.accessControlEnabled")
-
-  val printingEnabled = config.getBoolean("platform5.terminal.printingEnabled")
-  val printerDevice = config.getString("platform5.terminal.printerDevice")
 
   def findFormat(formatName: String) =
     config.getConfigList("platform5.terminal.config.formats").asScala

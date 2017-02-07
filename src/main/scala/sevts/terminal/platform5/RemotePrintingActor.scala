@@ -2,12 +2,14 @@ package sevts.terminal.platform5
 
 import java.awt.print.{Book, PageFormat, Paper, PrinterJob}
 import javax.print.{PrintService, PrintServiceLookup}
+
 import akka.actor._
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.printing.PDFPrintable
-import sevts.server.domain.{DocumentRecord, ME}
+import sevts.server.domain._
 import sevts.terminal.config.Settings
+
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration._
@@ -33,7 +35,7 @@ class RemotePrintingActor(settings: Settings) extends Actor with LazyLogging {
   implicit val ec = context.dispatcher
   implicit val timeout = Timeout(20 seconds)
 
-  if(settings.printingEnabled && settings.remoteEnabled) {
+  if(settings.printing.enabled && settings.remoteEnabled) {
     context.setReceiveTimeout(3 seconds)
   }
 
@@ -86,17 +88,17 @@ class RemotePrintingActor(settings: Settings) extends Actor with LazyLogging {
     case TerminalRegistered(id) ⇒
       logger.info(s"Print terminal id=`${id.value}` registered on remote server")
 
-    case p@PrintFile(terminal, badge, data) ⇒
+    case p@RemotePrintFile(_, printer, badge, data) ⇒
       logger.info("Print file command received")
       (for {
-        deviceContextOpt ← resolvePrinterService(settings.printerDevice)
+        deviceContextOpt ← resolvePrinterService(printer.id)
         if deviceContextOpt.nonEmpty
         result ← doPrint(badge, data, deviceContextOpt.get)
       } yield {
         logger.info(s"Print task completed ${result.getJobName}")
         Enqueued
       }) recover {
-        case e: Exception if NonFatal(e) ⇒
+        case NonFatal(e) ⇒
           logger.error(e.getMessage, e)
           PrintError(e)
       } pipeTo sender()
@@ -112,7 +114,7 @@ class RemotePrintingActor(settings: Settings) extends Actor with LazyLogging {
 
     case AccessDenied ⇒
       logger.error(s"Access denied for terminal with name `${settings.autoLoginConfig.terminal}`")
-      logger.error("Stopping terminl process..")
+      logger.error("Stopping terminal process..")
       context.system.terminate()
 
     case unknown ⇒
@@ -120,8 +122,9 @@ class RemotePrintingActor(settings: Settings) extends Actor with LazyLogging {
 
   }
 
-  private def resolvePrinterService(printer: String): Future[Option[PrintService]] = Future {
-    PrinterJob.lookupPrintServices().find( _.getName == printer )
+  private def resolvePrinterService(printerId: String): Future[Option[PrintService]] = Future {
+    val printerName = settings.printing.devices.list.getOrElse(printerId, throw FailureType.RecordNotFound)
+    PrinterJob.lookupPrintServices().find( _.getName == printerName)
   }
 
 
@@ -145,7 +148,7 @@ class RemotePrintingActor(settings: Settings) extends Actor with LazyLogging {
 
     // custom page format
     val pageFormat = new PageFormat()
-    pageFormat.setOrientation(settings.printer.orientation)
+    pageFormat.setOrientation(settings.printing.page.orientation)
     pageFormat.setPaper(paper)
 
     // override the page format
