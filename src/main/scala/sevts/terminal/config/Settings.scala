@@ -183,7 +183,7 @@ object Settings {
   object RemoteServer {
 
     case class Address(system: String, host: String, port: Int) {
-      override def toString() = s"akka://$system@$host:$port"
+      override def toString() = s"akka.tcp://$system@$host:$port"
       def path = toString()
     }
 

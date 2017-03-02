@@ -96,7 +96,7 @@ class RemotePrintingActor(settings: Settings) extends Actor with LazyLogging {
         result ← doPrint(badge, data, deviceContextOpt.get)
       } yield {
         logger.info(s"Print task completed ${result.getJobName}")
-        Enqueued
+        sevts.remote.protocol.Protocol.Enqueued(result.getJobName)
       }) recover {
         case NonFatal(e) ⇒
           logger.error(e.getMessage, e)
