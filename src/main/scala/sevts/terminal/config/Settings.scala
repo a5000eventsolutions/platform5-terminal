@@ -5,7 +5,7 @@ import java.util.Map.Entry
 
 import com.typesafe.config._
 import com.typesafe.scalalogging.LazyLogging
-import sevts.remote.protocol.Reaction
+import sevts.server.remote.Reaction
 import sevts.terminal.config.Settings._
 
 import collection.JavaConverters._

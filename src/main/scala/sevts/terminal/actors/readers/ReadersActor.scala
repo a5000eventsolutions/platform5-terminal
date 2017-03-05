@@ -3,15 +3,12 @@ package sevts.terminal.actors.readers
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.actor.Actor.Receive
 import akka.pattern._
-
 import scala.concurrent.duration._
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import sevts.remote.protocol.TerminalMessage.TerminalEPCEvent
 import sevts.terminal.Injector
 import sevts.terminal.config.Settings
 import sevts.terminal.config.Settings.{DeviceConfig, DeviceDriverType}
-
 import scala.util.control.NonFatal
 
 object ReadersActor {
@@ -62,19 +59,6 @@ case class ReadersActor(settings: Settings, Injector: Injector) extends Actor wi
   }
 
   override def receive: Receive = {
-
-    case msg: Rfid9809ReaderActor.Commands.WriteEpcData ⇒
-      deviceActors foreach { case (deviceConfig, deviceRef) ⇒
-        deviceConfig.deviceDriverType match {
-          case DeviceDriverType.RRU9809 ⇒
-            deviceRef ! msg
-          case any ⇒
-        }
-      }
-
-    case msg: Rfid9809ReaderActor.Response ⇒
-      val response = TerminalEPCEvent(msg.toString)
-      //Injector.remoteAccessControlActor ! response
 
     case Request.StartDevices ⇒
       settings.terminalConfig.devices
