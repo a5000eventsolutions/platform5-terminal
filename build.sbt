@@ -28,9 +28,9 @@ lazy val terminal = (project in file("./"))
   )
   .settings(
     scriptClasspath := Seq("*"),
-    bashScriptConfigLocation := Some("${app_home}/../CLIENT_TERMINAL_config.txt"),
+    bashScriptConfigLocation := Some("${app_home}/../PLATFORM5_TERMINAL_config.txt"),
     mainClass in Compile := Some("sevts.terminal.Platform5Terminal"),
-    topLevelDirectory := Some("platform5-server")
+    topLevelDirectory := Some("platform5-terminal")
   )
   .enablePlugins(JavaAppPackaging)
   .settings(
