@@ -20,7 +20,7 @@ class BrowserRunner(settings: Settings) extends LazyLogging {
       val params = s"/#/autologin?login=${settings.autoLoginConfig.username}" +
         s"&password=${settings.autoLoginConfig.password}" +
         s"&terminal=${settings.autoLoginConfig.terminal}"
-      val fs = if(settings.chromeFullScreen) " --kiosk --fullscreen" else ""
+      val fs = if(settings.chromeFullScreen) settings.autoLoginConfig.browserParams else ""
       val command = s"""start chrome $fs "$url$params""""
       logger.info(s"command line: $command")
       Runtime.getRuntime.exec(Array[String]("cmd", "/c", command))

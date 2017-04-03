@@ -146,13 +146,17 @@ object Settings {
 
     object AutoLogin {
       def apply(config: Config): AutoLogin = {
-        AutoLogin(config.getBoolean("enabled"), config.getString("username"),
-          config.getString("password"), config.getString("terminal"))
+        AutoLogin(config.getBoolean("enabled"),
+          config.getString("username"),
+          config.getString("password"),
+          config.getString("terminal"),
+          config.getString("browserParams")
+        )
       }
     }
 
     case class AutoLogin(enabled: Boolean, username: String, password: String,
-                         terminal: String)
+                         terminal: String, browserParams: String)
   }
 
   object PrinterConfig {
