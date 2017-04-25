@@ -25,6 +25,8 @@ object Dependencies {
 //    "sevts.platform5" %% "protocol" % Versions.platform5,
 //    "sevts.platform5" %% "domain" % Versions.platform5,
 
+    "com.github.romix.akka" % "akka-kryo-serialization_2.12" % "0.5.2",
+
     // Logging
     "com.typesafe.scala-logging" %% "scala-logging" % Versions.scalaLogging % Compile,
     "org.slf4j" % "slf4j-log4j12" % Versions.slf4j % Compile,

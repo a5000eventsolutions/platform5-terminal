@@ -22,15 +22,15 @@ import sevts.remote.protocol.Protocol._
 
 object RemotePrintingActor {
 
-  def props(settings: Settings): Props = Props(classOf[RemotePrintingActor], settings)
-
-  private case object Warmup
-  private case object Reconnect
+  //def props(settings: Settings): Props = Props(classOf[RemotePrintingActor], settings)
+//
+//  private case object Warmup
+//  private case object Reconnect
 }
 
-class RemotePrintingActor(settings: Settings) extends Actor with LazyLogging {
+class RemotePrintingActor(settings: Settings) {
 
-  import RemotePrintingActor._
+  /*import RemotePrintingActor._
 
   implicit val ec = context.dispatcher
   implicit val timeout = Timeout(20 seconds)
@@ -39,23 +39,12 @@ class RemotePrintingActor(settings: Settings) extends Actor with LazyLogging {
     context.setReceiveTimeout(3 seconds)
   }
 
-  val path = s"${settings.remoteServer.path}/user/root/printing-endpoint-actor"
 
   override def preStart() = {
     initPrinters()
   }
 
-  def initPrinters() = {
-    val printServices = PrintServiceLookup.lookupPrintServices(null, null)
-    logger.info("==============================")
-    logger.info("     System printers list     ")
-    logger.info("==============================")
-    printServices foreach { service ⇒
-      logger.info(service.getName)
-    }
-    logger.info("==============================")
 
-  }
 
   def sendIdentifyRequest() = context.actorSelection(path) ! Identify(path)
 
@@ -90,18 +79,7 @@ class RemotePrintingActor(settings: Settings) extends Actor with LazyLogging {
 
     case p@RemotePrintFile(_, printer, badge, data) ⇒
       logger.info("Print file command received")
-      (for {
-        deviceContextOpt ← resolvePrinterService(printer.id)
-        if deviceContextOpt.nonEmpty
-        result ← doPrint(badge, data, deviceContextOpt.get)
-      } yield {
-        logger.info(s"Print task completed ${result.getJobName}")
-        sevts.remote.protocol.Protocol.Enqueued(result.getJobName)
-      }) recover {
-        case NonFatal(e) ⇒
-          logger.error(e.getMessage, e)
-          PrintError(e)
-      } pipeTo sender()
+      pipeTo sender()
 
     case Ping ⇒
       sender() ! Pong
@@ -121,44 +99,6 @@ class RemotePrintingActor(settings: Settings) extends Actor with LazyLogging {
       logger.error(s"Unknown message ${unknown.toString}")
 
   }
+*/
 
-  private def resolvePrinterService(printerId: String): Future[Option[PrintService]] = Future {
-    val printerName = settings.printing.devices.list.getOrElse(printerId, throw FailureType.RecordNotFound)
-    PrinterJob.lookupPrintServices().find( _.getName == printerName)
-  }
-
-
-  private def doPrint(badge: ME[DocumentRecord], data: Array[Byte], printerService: PrintService): Future[PrinterJob] = Future {
-    val document = PDDocument.load(data)
-
-    val printerJob: PrinterJob = PrinterJob.getPrinterJob
-    printerJob.setPrintService(printerService)
-    printerJob.setJobName(s"${badge.id}-${scala.util.Random.nextInt(10000)}")
-
-    val paper = new Paper()
-    val mediaBox = document.getPage(0).getMediaBox
-    paper.setSize(mediaBox.getWidth, mediaBox.getHeight)
-    //paper.setSize(settings.printer.pageWidth, settings.printer.pageHeight)
-    paper.setImageableArea(
-      document.getPage(0).getBBox.getLowerLeftX,
-      document.getPage(0).getBBox.getLowerLeftY,
-      document.getPage(0).getBBox.getWidth,
-      document.getPage(0).getBBox.getHeight
-    )
-
-    // custom page format
-    val pageFormat = new PageFormat()
-    pageFormat.setOrientation(settings.printing.page.orientation)
-    pageFormat.setPaper(paper)
-
-    // override the page format
-    val book = new Book()
-    // append all pages
-    book.append(new PDFPrintable(document), pageFormat, document.getNumberOfPages)
-    printerJob.setPageable(book)
-    printerJob.print()
-    document.close()
-    logger.info("File printing job complete")
-    printerJob
-  }
 }
