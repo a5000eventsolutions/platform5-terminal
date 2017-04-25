@@ -34,7 +34,6 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-actor" % Versions.akka % Compile,
     "com.typesafe.akka" %% "akka-slf4j" % Versions.akka % Compile,
     "com.typesafe.akka" %% "akka-testkit" % Versions.akka % Test,
-    "com.typesafe.akka" %% "akka-remote" % Versions.akka % Compile,
 
     // Testing
     "org.scalatest" %% "scalatest" % Versions.scalatest % Test,

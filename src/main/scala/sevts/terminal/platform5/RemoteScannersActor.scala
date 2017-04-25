@@ -192,6 +192,9 @@ class RemoteScannersActor(injector: Injector) extends FSM[State, Data] with Lazy
           case Reaction.OpenFormData ⇒
             logger.info(s"Open formdata received $value")
             Some(OpenFormData(terminalId, value, badgeSearch.getOrElse(false), formList))
+          case Reaction.CheckBadgeAccess ⇒
+            logger.info(s"Check badge access $value")
+            Some()
           case msg ⇒
             logger.error(s"Disallowed reaction: $msg")
             None
