@@ -11,13 +11,16 @@ import akka.util.ByteString
 import com.typesafe.scalalogging.LazyLogging
 import sevts.terminal.Injector
 import sevts.terminal.networking.websocket.WsClient._
+
 import scala.concurrent._
 import scala.concurrent.duration._
 import akka.pattern._
 import akka.stream.scaladsl.GraphDSL.Builder
 import sevts.remote.protocol.Protocol
 import sevts.server.domain.FailureType
+
 import scala.language.postfixOps
+import scala.util.Try
 import scala.util.control.NonFatal
 
 

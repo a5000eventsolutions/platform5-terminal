@@ -2,6 +2,7 @@ package sevts.terminal
 
 import akka.actor.ActorSystem
 import akka.serialization.SerializationExtension
+import com.twitter.chill.{KryoInstantiator, KryoPool}
 import com.typesafe.scalalogging.LazyLogging
 import sevts.terminal.actors.format.FormatsActor
 import sevts.terminal.actors.readers.ReadersActor
@@ -22,11 +23,13 @@ trait Injector extends LazyLogging {
 
   val serialization = SerializationExtension(system)
 
+  val POOL_SIZE = 10
+  val kryo: KryoPool = KryoPool.withByteArrayOutputStream(POOL_SIZE, new KryoInstantiator)
+
+
   val readersActor = system.actorOf(ReadersActor.props(settings, this), name = "readers-actor")
   val formatsActor = system.actorOf(FormatsActor.props(settings), name = "formats-actor")
   val scannersActor = system.actorOf(ScannersActor.props(this), name = "scanners-actor")
 
-//  val printingEndpointActor = system.actorOf(RemotePrintingActor.props(settings), name = "remote-printing-actor")
-//  val scannersEndpointActor = system.actorOf(RemoteScannersActor.props(this), name = "remote-scanners-actor")
-  val endpointActor = system.actorOf(RemoteTransportActor.props(this), name = "remote-scanners-actor")
+  val endpointActor = system.actorOf(RemoteTransportActor.props(this), name = "remote-transport-actor")
 }

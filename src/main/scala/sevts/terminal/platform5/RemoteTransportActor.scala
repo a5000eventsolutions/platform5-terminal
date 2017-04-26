@@ -137,7 +137,7 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
       stay()
 
     case Event(TerminalRegistered(id), Data.ConnectionEstablished(a, l)) ⇒
-      logger.info("Terminal registered on access control server")
+      logger.info(s"Terminal registered on access control server as id `${id.value}`")
       goto(State.Working) using Data.Working(id, a, l)
 
     case Event(AccessDenied, _) ⇒
@@ -156,7 +156,7 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
 
     case Event(Ping, data: Data.ConnectionEstablished) ⇒
       logger.error("reg conn established")
-      sender() ! Pong
+      data.wsClient ! Pong
       stay() using data.copy(lastActivity = System.currentTimeMillis())
 
     case Event(ActivityCheck, data: Data.ConnectionEstablished) ⇒
@@ -169,6 +169,11 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
       }
 
     case Event(ActivityCheck, _) ⇒
+      goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
+
+    case Event(Terminated(actor), _) ⇒
+      logger.error("Access control server connection lost!!!")
+      logger.error("Trying reconnect")
       goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
   }
 
@@ -205,11 +210,16 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
       goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
 
     case Event(Ping, data: Data.Working) ⇒
-      sender() ! Pong
+      data.wsClient ! Pong
       stay() using data.copy(lastActivity = System.currentTimeMillis())
 
     case Event(Reconnect,  data: Data.Working) ⇒
       logger.error("work reconnect")
+      data.wsClient ! PoisonPill
+      goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
+
+    case Event(unknown, data: Data.Working) ⇒
+      logger.info(s"Unknown event received ${unknown.toString}")
       data.wsClient ! PoisonPill
       goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
 

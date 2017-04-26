@@ -25,7 +25,7 @@ object Dependencies {
 //    "sevts.platform5" %% "protocol" % Versions.platform5,
 //    "sevts.platform5" %% "domain" % Versions.platform5,
 
-    "com.github.romix.akka" % "akka-kryo-serialization_2.12" % "0.5.2",
+    "com.twitter" % "chill-akka_2.12" % "0.9.2",
 
     // Logging
     "com.typesafe.scala-logging" %% "scala-logging" % Versions.scalaLogging % Compile,
