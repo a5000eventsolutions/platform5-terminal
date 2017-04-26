@@ -50,7 +50,7 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
   import RemoteTransportActor._
 
   implicit val ec = context.dispatcher
-  implicit val timeout = Timeout(20 seconds)
+  implicit val timeout = Timeout(10 seconds)
 
   val printerService = new PrinterService(injector)
 
@@ -101,7 +101,7 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
 
     case Event(WsClient.Disconnected, reconnect: Data.Reconnect) ⇒
       logger.error(s"Connection failed")
-      context.system.scheduler.scheduleOnce(15 seconds, self, Reconnect)
+      //context.system.scheduler.scheduleOnce(15 seconds, self, Reconnect)
       stay()
 
     case Event(Reconnect, _) ⇒

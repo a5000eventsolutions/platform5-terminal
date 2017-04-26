@@ -211,7 +211,7 @@ class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
   val autoLoginConfig = TerminalConfig.AutoLogin(config.getConfig("platform5.terminal.autoLogin"))
   val terminalConfig = TerminalConfig.Devices(config.getConfig("platform5.terminal.config"), this)
 
-  val webSocketUrl = config.getString("platform5.server.remote.webSocketUrl")
+  val webSocketPort = config.getInt("platform5.server.remote.webSocketPort")
 
   val serverHost = config.getString("platform5.server.remote.host")
   val serverPort = config.getString("platform5.server.remote.httpPort")

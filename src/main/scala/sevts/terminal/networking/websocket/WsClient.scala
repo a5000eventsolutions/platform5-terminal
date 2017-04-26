@@ -55,7 +55,7 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
   val (queueSource, futureQueue) = peekMatValue(Source.queue[BinaryMessage](10, OverflowStrategy.fail))
   futureQueue.map { r ⇒ self ! r }
 
-  val url = injector.settings.webSocketUrl
+  val url = s"ws://${injector.settings.serverHost}:${injector.settings.webSocketPort.toString}/terminalws"
   val clientFuture = new AkkaWsClient(injector, url, self, queueSource.asInstanceOf[Source[BinaryMessage, NotUsed]]).connect()
   clientFuture.map {
     case Done ⇒ parent ! Connected
@@ -64,7 +64,11 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
       self ! PoisonPill
   }
 
-  val queue = Await.result(futureQueue, 30 seconds)
+  val queue = Await.result(futureQueue, 2 seconds)
+
+  override def postStop() = {
+    logger.info(s"Websocket client closed")
+  }
 
   def receive = {
     case _ ⇒ context.become(working)

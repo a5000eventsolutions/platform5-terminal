@@ -2,12 +2,15 @@ package sevts.terminal.platform5
 
 import java.awt.print.{Book, PageFormat, Paper, PrinterJob}
 import javax.print.{PrintService, PrintServiceLookup}
+
+import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.printing.PDFPrintable
 import sevts.remote.protocol.Protocol.{PrintError, RemotePrintFile}
 import sevts.server.domain.{DocumentRecord, FailureType, ME}
 import sevts.terminal.Injector
+import scala.concurrent.duration._
 import scala.concurrent.Future
 import scala.util.control.NonFatal
 
@@ -15,6 +18,8 @@ import scala.util.control.NonFatal
 class PrinterService(injector: Injector) extends LazyLogging {
 
   implicit val ec = injector.ec
+
+  implicit val timeout = Timeout(15 seconds)
 
   val settings = injector.settings
 
@@ -28,11 +33,11 @@ class PrinterService(injector: Injector) extends LazyLogging {
       result ← doPrint(command.badge, command.file, deviceContextOpt.get)
     } yield {
       logger.info(s"Print task completed ${result.getJobName}")
-      sevts.remote.protocol.Protocol.Enqueued(result.getJobName)
+      sevts.remote.protocol.Protocol.Enqueued(command.id, result.getJobName)
     }) recover {
       case NonFatal(e) ⇒
         logger.error(e.getMessage, e)
-        PrintError(e)
+        PrintError(command.id, e)
     }
   }
 
