@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core.iml" filepath="$PROJECT_DIR$/.idea/modules/core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/core-build.iml" filepath="$PROJECT_DIR$/.idea/modules/core-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/domain.iml" filepath="$PROJECT_DIR$/.idea/modules/domain.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/domain-build.iml" filepath="$PROJECT_DIR$/.idea/modules/domain-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/jsonFormats.iml" filepath="$PROJECT_DIR$/.idea/modules/jsonFormats.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/jsonFormats-build.iml" filepath="$PROJECT_DIR$/.idea/modules/jsonFormats-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/macros.iml" filepath="$PROJECT_DIR$/.idea/modules/macros.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/macros-build.iml" filepath="$PROJECT_DIR$/.idea/modules/macros-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/platform5.iml" filepath="$PROJECT_DIR$/.idea/modules/platform5.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/platform5-build.iml" filepath="$PROJECT_DIR$/.idea/modules/platform5-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/protocol.iml" filepath="$PROJECT_DIR$/.idea/modules/protocol.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/protocol-build.iml" filepath="$PROJECT_DIR$/.idea/modules/protocol-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/server.iml" filepath="$PROJECT_DIR$/.idea/modules/server.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/server-build.iml" filepath="$PROJECT_DIR$/.idea/modules/server-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/terminal.iml" filepath="$PROJECT_DIR$/.idea/modules/terminal.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/terminal-build.iml" filepath="$PROJECT_DIR$/.idea/modules/terminal-build.iml" />
+    </modules>
+  </component>
+</project>

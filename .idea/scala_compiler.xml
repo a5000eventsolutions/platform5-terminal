@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <profile name="SBT 1" modules="platform5" />
+    <profile name="SBT 2" modules="terminal">
+      <option name="macros" value="true" />
+    </profile>
+    <profile name="SBT 4" modules="core,server,domain,jsonFormats,macros,protocol">
+      <option name="macros" value="true" />
+      <plugins>
+        <plugin path="C:\Users\moroz\.ivy2\cache\org.scalamacros\paradise_2.12.2\jars\paradise_2.12.2-2.1.0.jar" />
+      </plugins>
+    </profile>
+  </component>
+</project>
