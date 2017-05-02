@@ -1,0 +1,95 @@
+package sevts.terminal.platform5
+
+import java.awt.print.{Book, PageFormat, Paper, PrinterJob}
+import javax.print.{PrintService, PrintServiceLookup}
+
+import akka.util.Timeout
+import com.typesafe.scalalogging.LazyLogging
+import org.apache.pdfbox.pdmodel.PDDocument
+import org.apache.pdfbox.printing.PDFPrintable
+import sevts.remote.protocol.Protocol.{PrintError, RemotePrintFile}
+import sevts.server.domain.{DocumentRecord, FailureType, ME}
+import sevts.terminal.Injector
+import scala.concurrent.duration._
+import scala.concurrent.Future
+import scala.util.control.NonFatal
+
+
+class PrinterService(injector: Injector) extends LazyLogging {
+
+  implicit val ec = injector.ec
+
+  implicit val timeout = Timeout(15 seconds)
+
+  val settings = injector.settings
+
+  initPrinters()
+
+
+  def print(command: RemotePrintFile) = {
+    (for {
+      deviceContextOpt ← resolvePrinterService(command.printer.id)
+      if deviceContextOpt.nonEmpty
+      result ← doPrint(command.badge, command.file, deviceContextOpt.get)
+    } yield {
+      logger.info(s"Print task completed ${result.getJobName}")
+      sevts.remote.protocol.Protocol.Enqueued(command.id, result.getJobName)
+    }) recover {
+      case NonFatal(e) ⇒
+        logger.error(e.getMessage, e)
+        PrintError(command.id, e)
+    }
+  }
+
+  private def initPrinters() = {
+    val printServices = PrintServiceLookup.lookupPrintServices(null, null)
+    logger.info("==============================")
+    logger.info("     System printers list     ")
+    logger.info("==============================")
+    printServices foreach { service ⇒
+      logger.info(service.getName)
+    }
+    logger.info("==============================")
+
+  }
+
+  private def resolvePrinterService(printerId: String): Future[Option[PrintService]] = Future {
+    val printerName = settings.printing.devices.list.getOrElse(printerId, throw FailureType.RecordNotFound)
+    PrinterJob.lookupPrintServices().find( _.getName == printerName)
+  }
+
+
+  private def doPrint(badge: ME[DocumentRecord], data: Array[Byte], printerService: PrintService): Future[PrinterJob] = Future {
+    val document = PDDocument.load(data)
+
+    val printerJob: PrinterJob = PrinterJob.getPrinterJob
+    printerJob.setPrintService(printerService)
+    printerJob.setJobName(s"${badge.id}-${scala.util.Random.nextInt(10000)}")
+
+    val paper = new Paper()
+    val mediaBox = document.getPage(0).getMediaBox
+    paper.setSize(mediaBox.getWidth, mediaBox.getHeight)
+    //paper.setSize(settings.printer.pageWidth, settings.printer.pageHeight)
+    paper.setImageableArea(
+      document.getPage(0).getBBox.getLowerLeftX,
+      document.getPage(0).getBBox.getLowerLeftY,
+      document.getPage(0).getBBox.getWidth,
+      document.getPage(0).getBBox.getHeight
+    )
+
+    // custom page format
+    val pageFormat = new PageFormat()
+    pageFormat.setOrientation(settings.printing.page.orientation)
+    pageFormat.setPaper(paper)
+
+    // override the page format
+    val book = new Book()
+    // append all pages
+    book.append(new PDFPrintable(document), pageFormat, document.getNumberOfPages)
+    printerJob.setPageable(book)
+    printerJob.print()
+    document.close()
+    logger.info("File printing job complete")
+    printerJob
+  }
+}

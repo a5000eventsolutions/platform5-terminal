@@ -182,20 +182,6 @@ object Settings {
     case class PrinterConfig(enabled: Boolean, page: PageConfig, devices: Devices)
   }
 
-
-
-  object RemoteServer {
-
-    case class Address(system: String, host: String, port: Int) {
-      override def toString() = s"akka.tcp://$system@$host:$port"
-      def path = toString()
-    }
-
-    def apply(config: Config): Address = {
-      Address(config.getString("system"), config.getString("host"), config.getInt("port"))
-    }
-  }
-
 }
 
 class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
@@ -203,7 +189,6 @@ class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
   val printing = PrinterConfig(config.getConfig("platform5.printing"))
 
   val remoteEnabled = config.getBoolean("platform5.server.remote.enabled")
-  val remoteServer = RemoteServer(config.getConfig("platform5.server.remote"))
 
   val accessControlEnabled = config.getBoolean("platform5.terminal.accessControlEnabled")
 
@@ -225,6 +210,8 @@ class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
 
   val autoLoginConfig = TerminalConfig.AutoLogin(config.getConfig("platform5.terminal.autoLogin"))
   val terminalConfig = TerminalConfig.Devices(config.getConfig("platform5.terminal.config"), this)
+
+  val webSocketPort = config.getInt("platform5.server.remote.webSocketPort")
 
   val serverHost = config.getString("platform5.server.remote.host")
   val serverPort = config.getString("platform5.server.remote.httpPort")

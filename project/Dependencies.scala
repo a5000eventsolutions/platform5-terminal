@@ -25,6 +25,8 @@ object Dependencies {
 //    "sevts.platform5" %% "protocol" % Versions.platform5,
 //    "sevts.platform5" %% "domain" % Versions.platform5,
 
+    "com.twitter" % "chill-akka_2.12" % "0.9.2",
+
     // Logging
     "com.typesafe.scala-logging" %% "scala-logging" % Versions.scalaLogging % Compile,
     "org.slf4j" % "slf4j-log4j12" % Versions.slf4j % Compile,
@@ -34,7 +36,6 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-actor" % Versions.akka % Compile,
     "com.typesafe.akka" %% "akka-slf4j" % Versions.akka % Compile,
     "com.typesafe.akka" %% "akka-testkit" % Versions.akka % Test,
-    "com.typesafe.akka" %% "akka-remote" % Versions.akka % Compile,
 
     // Testing
     "org.scalatest" %% "scalatest" % Versions.scalatest % Test,
