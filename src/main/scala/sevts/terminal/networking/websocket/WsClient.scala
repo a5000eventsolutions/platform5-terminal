@@ -136,7 +136,7 @@ class AkkaWsClient(injector: Injector, val webSocketUrl: String, parent: ActorRe
 
 
   def connect(): Future[Done] = {
-    println(s"Attempting to connect to $webSocketUrl")
+    logger.info(s"Attempting to connect to $webSocketUrl")
     webSocketUpgrade.flatMap {
       upgrade ⇒ upgrade.response.status match {
         case StatusCodes.SwitchingProtocols ⇒
