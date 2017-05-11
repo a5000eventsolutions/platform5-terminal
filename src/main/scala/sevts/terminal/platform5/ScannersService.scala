@@ -33,7 +33,7 @@ object ScannersService extends LazyLogging {
           case Reaction.OpenFormData ⇒
             logger.info(s"Open formdata received $value")
             Some(OpenFormData(terminalId, value, badgeSearch.getOrElse(false), formList))
-          case Reaction.CheckBadgeAccess ⇒
+          case Reaction.CheckAccess ⇒
             logger.info(s"Check badge access $value")
             Some(OpenFormData(terminalId, value, badgeSearch.getOrElse(false), formList))
           case msg ⇒

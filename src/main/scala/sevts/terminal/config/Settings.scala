@@ -72,7 +72,7 @@ object Settings {
         case ReactionType.Redirect ⇒
           Reaction.OpenFormData
         case ReactionType.CheckBadge ⇒
-          Reaction.CheckBadgeAccess
+          Reaction.CheckAccess
         case ReactionType.AssignBarcode ⇒
           Reaction.AssignBarcodeValue
         case ReactionType.OpenAndAssignBarcode ⇒
