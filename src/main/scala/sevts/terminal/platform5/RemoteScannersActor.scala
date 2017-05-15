@@ -4,8 +4,6 @@ import akka.actor._
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import sevts.remote.protocol.Protocol._
-import sevts.server.remote.{Message, Reaction, TerminalMessage}
-import sevts.server.remote.TerminalMessage.TerminalPushRequest
 import sevts.terminal.Injector
 import sevts.terminal.actors.readers.{ReadersActor, Rfid9809ReaderActor}
 import sevts.terminal.actors.scanners.ScannersActor

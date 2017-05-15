@@ -34,7 +34,7 @@ class BrowserRunner(settings: Settings) extends LazyLogging {
       val loginParams = s"/#/autologin?login=${settings.autoLoginConfig.username}" +
         s"&password=${settings.autoLoginConfig.password}" +
         s"&terminal=${settings.autoLoginConfig.terminal}"
-      val terminalUrl = s"""--app="$url$loginParams""""
+      val terminalUrl = s"""--app=$url$loginParams"""
 
       val screen = s" --window-position=${cfg.position},0"
       val kiosk = s""" --kiosk --unsafely-treat-insecure-origin-as-secure="$url" --user-data-dir="./chrome${cfg.name}" """

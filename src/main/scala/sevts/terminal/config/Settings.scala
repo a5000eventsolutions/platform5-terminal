@@ -71,8 +71,8 @@ object Settings {
           Reaction.PrintBadge(parameters.getString("badgeTypeId"))
         case ReactionType.Redirect ⇒
           Reaction.OpenFormData
-        case ReactionType.CheckBadge ⇒
-          Reaction.CheckAccess
+//        case ReactionType.CheckBadge ⇒
+//          Reaction.CheckAccess
         case ReactionType.AssignBarcode ⇒
           Reaction.AssignBarcodeValue
         case ReactionType.OpenAndAssignBarcode ⇒
