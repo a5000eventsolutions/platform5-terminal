@@ -8,8 +8,10 @@ import com.typesafe.scalalogging.LazyLogging
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.printing.PDFPrintable
 import sevts.remote.protocol.Protocol.{PrintError, RemotePrintFile}
-import sevts.server.domain.{DocumentRecord, FailureType, ME}
+import sevts.server.documents.DocumentRecord
+import sevts.server.domain.{FailureType, ME}
 import sevts.terminal.Injector
+
 import scala.concurrent.duration._
 import scala.concurrent.Future
 import scala.util.control.NonFatal
@@ -30,7 +32,7 @@ class PrinterService(injector: Injector) extends LazyLogging {
     (for {
       deviceContextOpt ← resolvePrinterService(command.printer.id)
       if deviceContextOpt.nonEmpty
-      result ← doPrint(command.badge, command.file, deviceContextOpt.get)
+      result ← doPrint(command.badgeId, command.file, deviceContextOpt.get)
     } yield {
       logger.info(s"Print task completed ${result.getJobName}")
       sevts.remote.protocol.Protocol.Enqueued(command.id, result.getJobName)
@@ -59,12 +61,12 @@ class PrinterService(injector: Injector) extends LazyLogging {
   }
 
 
-  private def doPrint(badge: ME[DocumentRecord], data: Array[Byte], printerService: PrintService): Future[PrinterJob] = Future {
+  private def doPrint(badge: DocumentRecord.RecordId, data: Array[Byte], printerService: PrintService): Future[PrinterJob] = Future {
     val document = PDDocument.load(data)
 
     val printerJob: PrinterJob = PrinterJob.getPrinterJob
     printerJob.setPrintService(printerService)
-    printerJob.setJobName(s"${badge.id}-${scala.util.Random.nextInt(10000)}")
+    printerJob.setJobName(s"$badge-${scala.util.Random.nextInt(10000)}")
 
     val paper = new Paper()
     val mediaBox = document.getPage(0).getMediaBox
