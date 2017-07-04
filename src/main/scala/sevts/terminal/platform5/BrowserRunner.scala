@@ -33,7 +33,8 @@ class BrowserRunner(settings: Settings) extends LazyLogging {
       val url = s"http://${settings.serverHost}:${settings.serverPort}"
       val loginParams = s"/#/autologin?login=${settings.autoLoginConfig.username}" +
         s"&password=${settings.autoLoginConfig.password}" +
-        s"&terminal=${settings.autoLoginConfig.terminal}"
+        s"&terminal=${settings.autoLoginConfig.terminal}" +
+        s"&monitor=${cfg.name}"
       val terminalUrl = s"""--app=$url$loginParams"""
 
       val screen = s" --window-position=${cfg.position},0"
