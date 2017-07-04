@@ -3,7 +3,7 @@ package sevts.terminal.platform5
 import com.typesafe.scalalogging.LazyLogging
 import sevts.server.domain.{Id, Terminal}
 import sevts.server.protocol.TerminalEvent
-import sevts.server.protocol.TerminalEvent.OpenFormData
+import sevts.server.protocol.TerminalEvent.{CheckBadgeAccess, OpenFormData}
 import sevts.server.remote.Message.ScannerMessage
 import sevts.server.remote.{Message, Reaction}
 import sevts.terminal.Injector
@@ -33,9 +33,9 @@ object ScannersService extends LazyLogging {
           case Reaction.OpenFormData ⇒
             logger.info(s"Open formdata received $value")
             Some(OpenFormData(terminalId, value, badgeSearch.getOrElse(false), formList))
-//          case Reaction.CheckAccess ⇒
-//            logger.info(s"Check badge access $value")
-//            Some(OpenFormData(terminalId, value, badgeSearch.getOrElse(false), formList))
+          case Reaction.CheckAccess ⇒
+            logger.info(s"Check badge access $value")
+            Some( CheckBadgeAccess(terminalId, value))
           case msg ⇒
             logger.error(s"Disallowed reaction: $msg")
             None

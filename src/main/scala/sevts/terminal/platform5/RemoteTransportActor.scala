@@ -187,7 +187,6 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
     case Event(dr: ReadersActor.DeviceEvent.DataReceived, workData: Data.Working) ⇒
       ScannersService.dataReceived(injector, workData.id, dr) map { resultOpt ⇒
         resultOpt.foreach { result ⇒
-
           workData.wsClient ! TerminalMessage(result)
         }
       } recover {
