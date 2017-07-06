@@ -1,8 +1,11 @@
 package sevts.terminal.actors.readers
 
 import java.util.concurrent.TimeUnit
+
 import akka.actor.{Actor, ActorRef, Props}
+import com.typesafe.scalalogging.LazyLogging
 import sevts.terminal.config.Settings.DeviceConfig
+
 import scala.concurrent.duration._
 import collection.JavaConverters._
 
@@ -15,7 +18,7 @@ object EmulatorReaderActor {
 
 }
 
-class EmulatorReaderActor(listener: ActorRef, config: DeviceConfig) extends Actor {
+class EmulatorReaderActor(listener: ActorRef, config: DeviceConfig) extends Actor with LazyLogging {
 
   case object Tick
 
@@ -28,12 +31,12 @@ class EmulatorReaderActor(listener: ActorRef, config: DeviceConfig) extends Acto
   var index = 0
 
   override def preStart(): Unit = {
-    context.system.scheduler.schedule(delay, delay, listener, Tick)
+    context.system.scheduler.schedule(delay, delay, self, Tick)
   }
 
   override def receive: Receive = {
     case Tick ⇒
-      ReadersActor.DeviceEvent.DataReceived(config.name, dataArray(index))
+      listener ! ReadersActor.DeviceEvent.DataReceived(config.name, dataArray(index))
       index = index + 1
       if(index == dataArray.length) { index = 0 }
   }
