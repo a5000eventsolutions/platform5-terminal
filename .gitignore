@@ -1,8 +1,7 @@
 *.class
 *.log
-*.iml
 *.npmignore
-.idea/
+.idea
 
 # Akka specific
 

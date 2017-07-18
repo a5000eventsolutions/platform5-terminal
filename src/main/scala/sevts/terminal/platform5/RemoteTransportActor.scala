@@ -132,8 +132,9 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
 
     case Event(Warmup, Data.ConnectionEstablished(actor, _)) ⇒
       val terminalName = settings.autoLoginConfig.terminal
+      val orgId = settings.autoLoginConfig.organisationId
       logger.info("Register access control terminal")
-      actor ! RegisterTerminal(terminalName)
+      actor ! RegisterTerminal(terminalName, orgId)
       stay()
 
     case Event(TerminalRegistered(id), Data.ConnectionEstablished(a, l)) ⇒

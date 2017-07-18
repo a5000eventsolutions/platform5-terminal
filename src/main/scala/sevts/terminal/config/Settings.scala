@@ -5,6 +5,7 @@ import java.util.Map.Entry
 
 import com.typesafe.config._
 import com.typesafe.scalalogging.LazyLogging
+import sevts.server.domain.{Id, Organisation}
 import sevts.server.remote.Reaction
 import sevts.terminal.config.Settings._
 
@@ -151,6 +152,7 @@ object Settings {
           username =config.getString("username"),
           password = config.getString("password"),
           terminal = config.getString("terminal"),
+          organisationId = Id[Organisation](config.getString("organisationId")),
           monitors = config.getConfigList("monitors").asScala.take(5).map(BrowserMonitor(_))
         )
       }
@@ -173,6 +175,7 @@ object Settings {
                          username: String,
                          password: String,
                          terminal: String,
+                         organisationId: Id[Organisation],
                          monitors: Seq[BrowserMonitor])
   }
 
