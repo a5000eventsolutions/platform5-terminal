@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="protocol" external.linked.project.path="$MODULE_DIR$/../../../platform5/shared/protocol" external.root.project.path="$MODULE_DIR$/../.." external.system.id="SBT" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
+    <output url="file://$MODULE_DIR$/../../../platform5/shared/protocol/target/scala-2.12/classes" />
+    <output-test url="file://$MODULE_DIR$/../../../platform5/shared/protocol/target/scala-2.12/test-classes" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../../platform5/shared/protocol">
+      <sourceFolder url="file://$MODULE_DIR$/../../../platform5/shared/protocol/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../platform5/shared/protocol/src/main/scala" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../platform5/shared/protocol/src/main/scala-2.12" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../platform5/shared/protocol/target/scala-2.12/src_managed/main" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../platform5/shared/protocol/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../platform5/shared/protocol/src/test/scala" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../platform5/shared/protocol/src/test/scala-2.12" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../platform5/shared/protocol/target/scala-2.12/src_managed/test" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../platform5/shared/protocol/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../platform5/shared/protocol/target/scala-2.12/resource_managed/main" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../platform5/shared/protocol/src/test/resources" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../platform5/shared/protocol/target/scala-2.12/resource_managed/test" type="java-test-resource" />
+      <excludeFolder url="file://$MODULE_DIR$/../../../platform5/shared/protocol/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="domain" exported="" />
+    <orderEntry type="library" name="SBT: com.typesafe.akka:akka-stream_2.12:2.5.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.akka:akka-slf4j_2.12:2.5.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.akka:akka-protobuf_2.12:2.5.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.akka:akka-persistence_2.12:2.5.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.akka:akka-persistence-query_2.12:2.5.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.akka:akka-parsing_2.12:10.0.8:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.akka:akka-http_2.12:10.0.8:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.akka:akka-http-core_2.12:10.0.8:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.akka:akka-actor_2.12:2.5.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scalamacros:paradise_2.12.2:2.1.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scala-lang:scala-reflect:2.12.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scala-lang:scala-library:2.12.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scala-lang:scala-compiler:2.12.2:jar" level="project" />
+    <orderEntry type="module" module-name="macros" exported="" />
+    <orderEntry type="module" module-name="jsonFormats" exported="" />
+    <orderEntry type="library" name="SBT: asm:asm:3.3.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: cglib:cglib:2.2.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.github.ben-manes.caffeine:caffeine:2.3.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.github.cb372:scalacache-caffeine_2.12:0.9.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.github.cb372:scalacache-core_2.12:0.9.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.github.tminglei:slick-pg_2.12:0.15.0-RC:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.github.tminglei:slick-pg_core_2.12:0.15.0-RC:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.lihaoyi:derive_2.12:0.4.4:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.lihaoyi:sourcecode_2.12:0.1.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.lihaoyi:upickle_2.12:0.4.4:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.softwaremill.quicklens:quicklens_2.12:1.4.8:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe:config:1.3.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe:ssl-config-core_2.12:0.2.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.scala-logging:scala-logging_2.12:3.5.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.slick:slick-hikaricp_2.12:3.2.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.typesafe.slick:slick_2.12:3.2.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: com.zaxxer:HikariCP:2.5.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: commons-beanutils:commons-beanutils:1.8.3:jar" level="project" />
+    <orderEntry type="library" name="SBT: commons-codec:commons-codec:1.10:jar" level="project" />
+    <orderEntry type="library" name="SBT: commons-logging:commons-logging:1.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: javax.activation:activation:1.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: javax.mail:mail:1.4.7:jar" level="project" />
+    <orderEntry type="library" name="SBT: joda-time:joda-time:2.9.4:jar" level="project" />
+    <orderEntry type="library" name="SBT: log4j:log4j:1.2.17:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.commons:commons-digester3:3.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.commons:commons-jexl:2.1.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.httpcomponents:httpclient:4.5.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.httpcomponents:httpcore:4.4.4:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.apache.httpcomponents:httpmime:4.5.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.flywaydb:flyway-core:4.1.2:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.joda:joda-convert:1.8.1:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.postgresql:postgresql:42.0.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.reactivestreams:reactive-streams:1.0.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scala-lang.modules:scala-java8-compat_2.12:0.8.0:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scala-lang.modules:scala-parser-combinators_2.12:1.0.4:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.scala-lang.modules:scala-xml_2.12:1.0.6:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.slf4j:slf4j-api:1.7.23:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.slf4j:slf4j-log4j12:1.7.12:jar" level="project" />
+    <orderEntry type="library" name="SBT: org.spire-math:jawn-parser_2.12:0.10.3:jar" level="project" />
+  </component>
+</module>

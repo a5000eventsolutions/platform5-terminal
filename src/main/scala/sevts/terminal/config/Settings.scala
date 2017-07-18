@@ -72,7 +72,7 @@ object Settings {
         case ReactionType.Redirect ⇒
           Reaction.OpenFormData
         case ReactionType.CheckBadge ⇒
-          Reaction.CheckBadgeAccess
+          Reaction.CheckAccess
         case ReactionType.AssignBarcode ⇒
           Reaction.AssignBarcodeValue
         case ReactionType.OpenAndAssignBarcode ⇒
@@ -136,27 +136,44 @@ object Settings {
   object TerminalConfig {
 
     case class Devices(config: Config, settings: Settings) {
-      val devices = config.getConfigList("devices").asScala.map(c ⇒ DeviceConfig(c))
-      val formats = config.getConfigList("formats").asScala.map(f ⇒ FormatConfig(f))
-      val reactions = config.getConfigList("reactions").asScala.map(r ⇒ ReactionConfig(r))
-      val scanners = config.getConfigList("scanners").asScala.flatMap(s ⇒ ScannerConfig(s, settings))
+      val devices = config.getConfigList("devices").asScala.map(DeviceConfig(_))
+      val formats = config.getConfigList("formats").asScala.map(FormatConfig(_))
+      val reactions = config.getConfigList("reactions").asScala.map(ReactionConfig(_))
+      val scanners = config.getConfigList("scanners").asScala.flatMap(ScannerConfig(_, settings))
     }
 
 
 
     object AutoLogin {
       def apply(config: Config): AutoLogin = {
-        AutoLogin(config.getBoolean("enabled"),
-          config.getString("username"),
-          config.getString("password"),
-          config.getString("terminal"),
-          config.getString("browserParams")
+        AutoLogin(
+          enabled = config.getBoolean("enabled"),
+          username =config.getString("username"),
+          password = config.getString("password"),
+          terminal = config.getString("terminal"),
+          monitors = config.getConfigList("monitors").asScala.take(5).map(BrowserMonitor(_))
         )
       }
     }
 
-    case class AutoLogin(enabled: Boolean, username: String, password: String,
-                         terminal: String, browserParams: String)
+    object BrowserMonitor {
+      def apply(config: Config): BrowserMonitor = {
+        BrowserMonitor(
+          name = config.getString("name"),
+          position = config.getString("position")
+        )
+      }
+    }
+
+    case class BrowserMonitor(
+                               name: String,
+                               position: String)
+
+    case class AutoLogin(enabled: Boolean,
+                         username: String,
+                         password: String,
+                         terminal: String,
+                         monitors: Seq[BrowserMonitor])
   }
 
   object PrinterConfig {
@@ -215,5 +232,4 @@ class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
 
   val serverHost = config.getString("platform5.server.remote.host")
   val serverPort = config.getString("platform5.server.remote.httpPort")
-  val chromeFullScreen = config.getBoolean("platform5.chromeFullscreen")
 }

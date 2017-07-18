@@ -29,7 +29,7 @@ object AppServer extends LazyLogging {
 
   def apply(config: Settings)(implicit system: ActorSystem) = {
     system.actorOf(Props(classOf[StandardAppServer], config, system))
-    BrowserRunner(config).runChrome()
+    BrowserRunner(config).runMonitorWindows()
   }
 
   private[AppServer] class StandardAppServer(val settings: Settings)(implicit val system: ActorSystem)

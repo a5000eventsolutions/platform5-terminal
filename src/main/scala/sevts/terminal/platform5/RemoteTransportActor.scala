@@ -187,7 +187,7 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
     case Event(dr: ReadersActor.DeviceEvent.DataReceived, workData: Data.Working) ⇒
       ScannersService.dataReceived(injector, workData.id, dr) map { resultOpt ⇒
         resultOpt.foreach { result ⇒
-          workData.wsClient ! result
+          workData.wsClient ! TerminalMessage(result)
         }
       } recover {
         case NonFatal(e) ⇒
@@ -219,9 +219,10 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
       goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
 
     case Event(unknown, data: Data.Working) ⇒
-      logger.info(s"Unknown event received ${unknown.toString}")
-      data.wsClient ! PoisonPill
-      goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
+      logger.info(s"Unknown event received ${unknown.toString} at state Working")
+      //data.wsClient ! PoisonPill
+      //goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
+      stay()
 
     case unknown ⇒
       logger.info(s"Unknown message ${unknown.toString}")
