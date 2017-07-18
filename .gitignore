@@ -1,0 +1,42 @@
+*.class
+*.log
+*.iml
+*.npmignore
+.idea/
+
+# Akka specific
+
+/node_modules/
+
+journal/
+snapshots/
+
+# sbt specific
+.cache
+.history
+.lib/
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+.db/
+logs/
+
+# Webapp
+
+webapp/es5
+webapp/css
+webapp/img
+
+#storage
+/storage/
+
+# Scala-IDE specific
+.scala_dependencies
+.worksheet
+.idea
+
+chromeMonitor1/
+project/project/
