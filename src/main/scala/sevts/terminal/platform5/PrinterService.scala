@@ -44,6 +44,7 @@ class PrinterService(injector: Injector) extends LazyLogging {
   }
 
   private def initPrinters() = {
+    Thread.sleep(100)
     val printServices = PrintServiceLookup.lookupPrintServices(null, null)
     logger.info("==============================")
     logger.info("     System printers list     ")
