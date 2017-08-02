@@ -6,8 +6,9 @@ object Dependencies {
     val scala = "2.12.2"
     val platform5 = "1.0"
     val slf4j = "1.7.12"
-    val akka = "2.5.1"
-    val logback = "1.1.3"
+    val akka = "2.5.3"
+    val log4j = "2.8.2"
+    val disruptor = "3.3.6"
     val barcode4j = "2.1"
     val scalaLogging = "3.5.0"
     val pdfbox = "2.0.0-RC1"
@@ -29,8 +30,10 @@ object Dependencies {
 
     // Logging
     "com.typesafe.scala-logging" %% "scala-logging" % Versions.scalaLogging % Compile,
-    "org.slf4j" % "slf4j-log4j12" % Versions.slf4j % Compile,
-    "com.typesafe.akka" %% "akka-slf4j" % Versions.akka % Compile,
+    "com.lmax" % "disruptor" % Versions.disruptor,
+    "org.apache.logging.log4j" % "log4j-core" % Versions.log4j,
+    "org.apache.logging.log4j" % "log4j-api" % Versions.log4j,
+    "org.apache.logging.log4j" % "log4j-slf4j-impl" % Versions.log4j,
 
     // Akka
     "com.typesafe.akka" %% "akka-actor" % Versions.akka % Compile,

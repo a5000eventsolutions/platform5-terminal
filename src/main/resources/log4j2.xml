@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <!-- APPENDER 1: CONSOLE -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="[%d{yyyy-MM-dd HH:mm:ss}] [%-5level] [%logger{4}] - %msg%n" />
+        </Console>
+
+        <!-- APPENDER 2: ROLLING FILE -->
+        <RollingFile name="FileAppender" fileName="logs/server.log" filePattern="logs/$${date:yyyy-MM-dd}/%d{MM-dd-HH}.log">
+            <PatternLayout>
+                <Pattern>[%d{yyyy-MM-dd HH:mm:ss}] [%-5level] [%logger{4}] - %msg%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+
+        <AsyncRoot level="INFO">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="FileAppender" />
+        </AsyncRoot>
+
+        <Logger name="com.zaxxer" level="info"/>
+        <Logger name="org.apache.commons.digester3.Digester" level="info"/>
+        <Logger name="scala.slick" level="INFO"/>
+        <Logger name="slick.jdbc" level="INFO"/>
+
+    </Loggers>
+</Configuration>
