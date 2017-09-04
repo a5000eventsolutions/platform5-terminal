@@ -181,6 +181,7 @@ object Settings {
     def apply(config: Config) = {
       PrinterConfig(
         enabled = config.getBoolean("enabled"),
+        dpi = config.getInt("dpi"),
         page = PageConfig(config.getConfig("page")),
         devices = Devices(config.getConfig("devices"))
       )
@@ -196,7 +197,7 @@ object Settings {
         entry.getKey → entry.getValue.unwrapped().asInstanceOf[String]
       }.toMap
     }
-    case class PrinterConfig(enabled: Boolean, page: PageConfig, devices: Devices)
+    case class PrinterConfig(enabled: Boolean, dpi: Int, page: PageConfig, devices: Devices)
   }
 
 }

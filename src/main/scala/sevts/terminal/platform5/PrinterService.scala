@@ -1,12 +1,14 @@
 package sevts.terminal.platform5
 
 import java.awt.print.{Book, PageFormat, Paper, PrinterJob}
+import java.io.ByteArrayInputStream
 import javax.print.{PrintService, PrintServiceLookup}
 
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
+import org.apache.pdfbox.io.MemoryUsageSetting
 import org.apache.pdfbox.pdmodel.PDDocument
-import org.apache.pdfbox.printing.PDFPrintable
+import org.apache.pdfbox.printing.{PDFPrintable, Scaling}
 import sevts.remote.protocol.Protocol.{PrintError, RemotePrintFile}
 import sevts.server.documents.DocumentRecord
 import sevts.server.domain.{FailureType, FileMeta, ME}
@@ -63,7 +65,7 @@ class PrinterService(injector: Injector) extends LazyLogging {
 
 
   private def doPrint(fileMeta: ME[FileMeta], data: Array[Byte], printerService: PrintService): Future[PrinterJob] = Future {
-    val document = PDDocument.load(data)
+    val document = PDDocument.load(new ByteArrayInputStream(data), MemoryUsageSetting.setupTempFileOnly())
 
     val printerJob: PrinterJob = PrinterJob.getPrinterJob
     printerJob.setPrintService(printerService)
@@ -88,7 +90,7 @@ class PrinterService(injector: Injector) extends LazyLogging {
     // override the page format
     val book = new Book()
     // append all pages
-    book.append(new PDFPrintable(document), pageFormat, document.getNumberOfPages)
+    book.append(new PDFPrintable(document, Scaling.ACTUAL_SIZE, false, injector.settings.printing.dpi), pageFormat, document.getNumberOfPages)
     printerJob.setPageable(book)
     printerJob.print()
     document.close()
