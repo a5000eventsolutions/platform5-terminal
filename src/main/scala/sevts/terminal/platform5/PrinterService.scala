@@ -69,7 +69,7 @@ class PrinterService(injector: Injector) extends LazyLogging {
 
     val printerJob: PrinterJob = PrinterJob.getPrinterJob
     printerJob.setPrintService(printerService)
-    printerJob.setJobName(s"${fileMeta.entity.name}-${scala.util.Random.nextInt(10000)}")
+    printerJob.setJobName(s"${fileMeta.entity.originalName}-${scala.util.Random.nextInt(10000)}")
 
     val paper = new Paper()
     val mediaBox = document.getPage(0).getMediaBox

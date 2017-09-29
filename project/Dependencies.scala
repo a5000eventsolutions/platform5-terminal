@@ -3,15 +3,15 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    val scala = "2.12.2"
+    val scala = "2.12.3"
     val platform5 = "1.0"
     val slf4j = "1.7.12"
-    val akka = "2.5.3"
+    val akka = "2.5.4"
     val log4j = "2.8.2"
     val disruptor = "3.3.6"
     val barcode4j = "2.1"
     val scalaLogging = "3.5.0"
-    val pdfbox = "2.0.0-RC1"
+    val pdfbox = "2.0.7"
     val jna = "4.2.1"
     val jSerialComm = "1.3.11"
     val json4s = "3.5.0"

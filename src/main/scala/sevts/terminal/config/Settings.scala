@@ -5,6 +5,7 @@ import java.util.Map.Entry
 
 import com.typesafe.config._
 import com.typesafe.scalalogging.LazyLogging
+import sevts.server.domain.{Id, Organisation}
 import sevts.server.remote.Reaction
 import sevts.terminal.config.Settings._
 
@@ -233,4 +234,6 @@ class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
 
   val serverHost = config.getString("platform5.server.remote.host")
   val serverPort = config.getString("platform5.server.remote.httpPort")
+
+  val organisationId = Id[Organisation](config.getString("organizationId"))
 }
