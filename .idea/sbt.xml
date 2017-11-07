@@ -7,14 +7,14 @@
         <option name="jdk" value="1.8" />
         <option name="modules">
           <set>
-            <option value="$USER_HOME$/.sbt/0.13/staging/a53e4962ee25f4d5ec9a/akka-persistence-jdbc" />
-            <option value="$USER_HOME$/.sbt/0.13/staging/a53e4962ee25f4d5ec9a/akka-persistence-jdbc/project" />
             <option value="$PROJECT_DIR$/../platform5" />
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/project" />
             <option value="$PROJECT_DIR$/../platform5/core" />
             <option value="$PROJECT_DIR$/../platform5/core/project" />
             <option value="$PROJECT_DIR$/../platform5/project" />
+            <option value="$PROJECT_DIR$/../platform5/scubs" />
+            <option value="$PROJECT_DIR$/../platform5/scubs/project" />
             <option value="$PROJECT_DIR$/../platform5/server" />
             <option value="$PROJECT_DIR$/../platform5/server/project" />
             <option value="$PROJECT_DIR$/../platform5/shared/domain" />
@@ -27,7 +27,7 @@
             <option value="$PROJECT_DIR$/../platform5/shared/protocol/project" />
           </set>
         </option>
-        <option name="sbtVersion" value="0.13.13" />
+        <option name="sbtVersion" value="1.0.3" />
       </SbtProjectSettings>
     </option>
     <option name="vmParameters" value="-XX:MaxPermSize=384M -Xss1024M" />

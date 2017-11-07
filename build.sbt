@@ -14,7 +14,6 @@ lazy val commonSettings = Seq(
   scalacOptions ++= Seq(
     "-language:experimental.macros"
   ),
-  ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
   resolvers ++= Seq(
     Resolver.bintrayRepo("naftoligug", "maven"),
     Resolver.sonatypeRepo("snapshots"))
@@ -34,9 +33,8 @@ lazy val terminal = (project in file("./"))
   )
   .enablePlugins(JavaAppPackaging)
   .settings(
-    mappings in Universal <+= (packageBin in Compile, sourceDirectory ) map { (_, src) =>
-      val conf = src / "main" / "resources" / "application.conf"
-      conf -> "conf/application.conf"
+    mappings in Universal += {
+      ((resourceDirectory in Compile).value / "application.conf") -> "conf/application.conf"
     }
   )
   .settings( commonSettings: _* )
