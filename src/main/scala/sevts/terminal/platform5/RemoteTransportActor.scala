@@ -1,5 +1,7 @@
 package sevts.terminal.platform5
 
+import java.time.Instant
+
 import akka.actor._
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
@@ -9,10 +11,12 @@ import sevts.terminal.Injector
 import sevts.terminal.actors.readers.ReadersActor
 import sevts.terminal.networking.websocket.WsClient
 import sevts.terminal.platform5.RemoteTransportActor.{Data, State}
+
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.control.NonFatal
 import akka.pattern._
+import sevts.terminal.networking.websocket.WsClient.WSException
 
 
 object RemoteTransportActor {
@@ -20,7 +24,6 @@ object RemoteTransportActor {
   def props(injector: Injector): Props = Props(classOf[RemoteTransportActor], injector)
 
   private case object Warmup
-  private case object Reconnect
   private case object ActivityCheck
 
   sealed trait State
@@ -70,8 +73,10 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
       case d: ClientRef ⇒
         d.wsClient ! PoisonPill
       case _ ⇒
+        logger.error("Unknown websocket state")
     }
-    context.actorOf(WsClient.props(injector, self))
+    val client = context.actorOf(WsClient.props(injector, self))
+    client
   }
 
   override def preStart() = {
@@ -102,25 +107,22 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
 
     case Event(WsClient.Disconnected, reconnect: Data.Reconnect) ⇒
       logger.error(s"Connection failed")
-      //context.system.scheduler.scheduleOnce(15 seconds, self, Reconnect)
       stay()
 
-    case Event(Reconnect, _) ⇒
-      logger.error("ident reconnect")
-      stay() using Data.Reconnect(sendConnectRequest())
-
-    case Event(ReceiveTimeout, _) ⇒
-      logger.error("ident receive timeout")
+    case Event(ReceiveTimeout, reconnect: Data.Reconnect) ⇒
+      logger.error(s"ident receive timeout ${reconnect.wsClient}")
       stay() using Data.Reconnect(sendConnectRequest())
 
     case Event(Terminated(actor), _) ⇒
-      logger.error("Access control server connection lost!!!")
-      logger.error("Trying reconnect")
-      goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
+      logger.error("Terminated")
+      stay()
 
-    case Event(ActivityCheck, _) ⇒
-      logger.error("Inactive timeout! Trying reconnect..")
-      sendConnectRequest()
+    case Event(ActivityCheck, reconnect: Data.Reconnect) ⇒
+      logger.error(s"Connecting Inactive timeout! ${reconnect.wsClient} Trying reconnect..")
+      stay() using Data.Reconnect(sendConnectRequest())
+
+    case Event(ex: WSException, _) ⇒
+      logger.info(s"Catch exception ${ex.e.getMessage}")
       stay()
   }
 
@@ -131,13 +133,13 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
       self ! Warmup
       stay()
 
-    case Event(Warmup, Data.ConnectionEstablished(actor, _)) ⇒
+    case Event(Warmup, data: Data.ConnectionEstablished) ⇒
       val terminalName = settings.autoLoginConfig.terminal
       val login = settings.autoLoginConfig.username
       val password = settings.autoLoginConfig.password
-      logger.info("Register access control terminal")
-      actor ! RegisterTerminal(login, password, terminalName, settings.organisationId)
-      stay()
+      logger.info(s"Register access control terminal ${data.wsClient}")
+      data.wsClient ! RegisterTerminal(login, password, terminalName, settings.organisationId)
+      stay() using data.copy(lastActivity = Instant.now().getEpochSecond)
 
     case Event(TerminalRegistered(id, uid), Data.ConnectionEstablished(a, l)) ⇒
       logger.info(s"Terminal registered on access control server as id `${id.value}`")
@@ -153,10 +155,6 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
       logger.error("Terminal register error on access control server")
       stay()
 
-    case Event(Reconnect, Data.ConnectionEstablished(a, l)) ⇒
-      a ! PoisonPill
-      goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
-
     case Event(Ping, data: Data.ConnectionEstablished) ⇒
       logger.error("reg conn established")
       data.wsClient ! Pong
@@ -164,20 +162,15 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
 
     case Event(ActivityCheck, data: Data.ConnectionEstablished) ⇒
       if(System.currentTimeMillis() - data.lastActivity > 10000) {
-        logger.error("Inactive timeout! Trying reconnect..")
-        data.wsClient ! PoisonPill
+        logger.error(s"Registering Inactive timeout ${data.wsClient}! Trying reconnect..")
         goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
       } else {
         stay()
       }
 
-    case Event(ActivityCheck, _) ⇒
-      goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
-
     case Event(Terminated(actor), _) ⇒
-      logger.error("Access control server connection lost!!!")
-      logger.error("Trying reconnect")
-      goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
+      logger.error(s"Terminated ${actor}. Registering reconnect")
+      stay()
   }
 
   when(State.Working) {
@@ -200,31 +193,22 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
 
     case Event(ActivityCheck, Data.Working(_, uid, actor, lastActivity)) ⇒
       if(System.currentTimeMillis() - lastActivity > 10000) {
-        logger.error("Inactive timeout! Trying reconnect..")
-        actor ! PoisonPill
+        logger.error(s"Working Inactive timeout! ${actor} Trying reconnect..")
         goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
       } else {
         stay()
       }
 
     case Event(Terminated(actor), _) ⇒
-      logger.error("Access control server connection lost!!!")
-      logger.error("Trying reconnect")
-      goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
+      logger.error("Terminated. Worked terminated")
+      stay()
 
     case Event(Ping, data: Data.Working) ⇒
       data.wsClient ! Pong
       stay() using data.copy(lastActivity = System.currentTimeMillis())
 
-    case Event(Reconnect,  data: Data.Working) ⇒
-      logger.error("work reconnect")
-      data.wsClient ! PoisonPill
-      goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
-
     case Event(unknown, data: Data.Working) ⇒
       logger.info(s"Unknown event received ${unknown.toString} at state Working")
-      //data.wsClient ! PoisonPill
-      //goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
       stay()
 
     case unknown ⇒

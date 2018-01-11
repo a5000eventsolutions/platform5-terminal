@@ -45,7 +45,7 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
 
   def peekMatValue[T, M](src: Source[T, M]): (Source[T, M], Future[M]) = {
     val p = Promise[M]
-    val s = src.mapMaterializedValue { m =>
+    val s = src.mapMaterializedValue { m ⇒
       p.trySuccess(m)
       m
     }
@@ -104,6 +104,11 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
     case TextMessage.Strict(text) ⇒
       logger.info(s"Response <- $text")
       parent ! text
+
+    case f: Status.Failure ⇒
+      logger.error(s"Websocket failure. Cause: ${f.cause}")
+      self ! PoisonPill
+      parent ! WSException(FailureType.Exception(f.cause.getMessage))
 
     case unknown ⇒
       logger.error(s"Unknown message ${unknown.toString}")
