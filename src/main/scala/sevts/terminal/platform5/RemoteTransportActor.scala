@@ -41,7 +41,8 @@ object RemoteTransportActor {
     case object EmptyData extends Data
     case class Reconnect(wsClient: ActorRef) extends Data with ClientRef
     case class ConnectionEstablished(wsClient: ActorRef, lastActivity: Long) extends Data with ClientRef
-    case class Working(id: Id[Terminal], wsClient: ActorRef, lastActivity: Long) extends Data with ClientRef
+    //uid is unique id (access token) on the server
+    case class Working(id: Id[Terminal], uid: String, wsClient: ActorRef, lastActivity: Long) extends Data with ClientRef
   }
 }
 
@@ -132,13 +133,15 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
 
     case Event(Warmup, Data.ConnectionEstablished(actor, _)) ⇒
       val terminalName = settings.autoLoginConfig.terminal
+      val login = settings.autoLoginConfig.username
+      val password = settings.autoLoginConfig.password
       logger.info("Register access control terminal")
-      actor ! RegisterTerminal(terminalName, settings.organisationId)
+      actor ! RegisterTerminal(login, password, terminalName, settings.organisationId)
       stay()
 
-    case Event(TerminalRegistered(id), Data.ConnectionEstablished(a, l)) ⇒
+    case Event(TerminalRegistered(id, uid), Data.ConnectionEstablished(a, l)) ⇒
       logger.info(s"Terminal registered on access control server as id `${id.value}`")
-      goto(State.Working) using Data.Working(id, a, l)
+      goto(State.Working) using Data.Working(id, uid, a, l)
 
     case Event(AccessDenied, _) ⇒
       logger.error(s"Access denied for terminal with name `${settings.autoLoginConfig.terminal}`")
@@ -187,7 +190,7 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
     case Event(dr: ReadersActor.DeviceEvent.DataReceived, workData: Data.Working) ⇒
       ScannersService.dataReceived(injector, workData.id, dr) map { resultOpt ⇒
         resultOpt.foreach { result ⇒
-          workData.wsClient ! TerminalMessage(result)
+          workData.wsClient ! TerminalMessage(workData.uid, result)
         }
       } recover {
         case NonFatal(e) ⇒
@@ -195,7 +198,7 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
       }
       stay()
 
-    case Event(ActivityCheck, Data.Working(_, actor, lastActivity)) ⇒
+    case Event(ActivityCheck, Data.Working(_, uid, actor, lastActivity)) ⇒
       if(System.currentTimeMillis() - lastActivity > 10000) {
         logger.error("Inactive timeout! Trying reconnect..")
         actor ! PoisonPill
