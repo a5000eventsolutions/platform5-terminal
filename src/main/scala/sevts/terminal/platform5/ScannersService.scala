@@ -18,30 +18,36 @@ import scala.concurrent.{ExecutionContext, Future}
 object ScannersService extends LazyLogging {
 
   def dataReceived(injector: Injector, terminalId: Id[Terminal], data: ReadersActor.DeviceEvent.DataReceived)
-                  (implicit ec: ExecutionContext, timeout: Timeout): Future[Option[TerminalEvent]] = {
+                  (implicit ec: ExecutionContext, timeout: Timeout): Future[Seq[TerminalEvent]] = {
     injector.scannersActor ? ScannersActor.Request.DataReceived(data.deviceName, data.data) map {
       case ScannersActor.Response.DataProcessed(msg) ⇒
         convertEvent(terminalId, msg)
     }
   }
 
-  private def convertEvent(terminalId: Id[Terminal], event: Message): Option[TerminalEvent] = {
+  private def convertEvent(terminalId: Id[Terminal], event: Message): Seq[TerminalEvent] = {
     event match {
       case ScannerMessage(reaction, _, value, _, badgeSearch, formList) ⇒
         logger.info("Terminal push message")
         reaction match {
           case Reaction.OpenFormData ⇒
             logger.info(s"Open formdata received $value")
-            Some(OpenFormData(terminalId, value, badgeSearch.getOrElse(false), formList))
+            Seq(OpenFormData(terminalId, value, badgeSearch.getOrElse(false), formList))
           case Reaction.CheckAccess ⇒
             logger.info(s"Check badge access $value")
-            Some( CheckBadgeAccess(terminalId, value))
+            Seq(CheckBadgeAccess(terminalId, value))
           case Reaction.AssignBarcodeValue ⇒
             logger.info(s"Assign barcode value: `$value`")
-            Some(AssignBarcodeValue(terminalId, value))
+            Seq(AssignBarcodeValue(terminalId, value))
+          case Reaction.OpenAndAssign ⇒
+            logger.info(s"Search and Assign barcode value: `$value`")
+            Seq(
+              OpenFormData(terminalId, value, badgeSearch.getOrElse(false), formList),
+              AssignBarcodeValue(terminalId, value)
+            )
           case msg ⇒
             logger.error(s"Disallowed reaction: $msg")
-            None
+            Seq()
         }
     }
   }
