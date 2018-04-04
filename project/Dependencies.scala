@@ -3,10 +3,10 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    val scala = "2.12.4"
+    val scala = "2.12.5"
     val platform5 = "1.0"
     val slf4j = "1.7.12"
-    val akka = "2.5.4"
+    val akka = "2.5.11"
     val log4j = "2.8.2"
     val disruptor = "3.3.6"
     val barcode4j = "2.1"
@@ -14,7 +14,6 @@ object Dependencies {
     val pdfbox = "2.0.7"
     val jna = "4.2.1"
     val jSerialComm = "1.3.11"
-    val json4s = "3.5.0"
     val jsch = "0.1.54"
     val jnaerator = "0.12"
     val scalatest = "3.0.1"

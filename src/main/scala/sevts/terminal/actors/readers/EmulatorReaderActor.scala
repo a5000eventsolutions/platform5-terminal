@@ -31,7 +31,7 @@ class EmulatorReaderActor(listener: ActorRef, config: DeviceConfig) extends Acto
   var index = 0
 
   override def preStart(): Unit = {
-    context.system.scheduler.schedule(delay, delay, self, Tick)
+    context.system.scheduler.schedule(20 seconds, delay, self, Tick)
   }
 
   override def receive: Receive = {
