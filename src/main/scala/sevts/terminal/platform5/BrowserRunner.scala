@@ -39,7 +39,7 @@ class BrowserRunner(settings: Settings) extends LazyLogging {
 
       val screen = s" --window-position=${cfg.position},0"
       val kiosk = s""" --kiosk --unsafely-treat-insecure-origin-as-secure="$url" --user-data-dir="./chrome${cfg.name}" """
-      val chromeParams = s"$screen$kiosk"
+      val chromeParams = s""" --unsafely-treat-insecure-origin-as-secure="$url" --user-data-dir="./chrome${cfg.name}" """
 
       val command = s"""start chrome $chromeParams "$terminalUrl""""
 

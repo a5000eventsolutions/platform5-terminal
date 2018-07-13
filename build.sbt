@@ -12,7 +12,8 @@ lazy val commonSettings = Seq(
   version := "1.0",
   scalaVersion := Dependencies.Versions.scala,
   scalacOptions ++= Seq(
-    "-language:experimental.macros"
+    "-language:experimental.macros",
+    "-Ypartial-unification"
   ),
   resolvers ++= Seq(
     Resolver.bintrayRepo("naftoligug", "maven"),
