@@ -12,18 +12,16 @@
             <option value="$PROJECT_DIR$/../platform5/core" />
             <option value="$PROJECT_DIR$/../platform5/core/project" />
             <option value="$PROJECT_DIR$/../platform5/project" />
-            <option value="$PROJECT_DIR$/../platform5/scubs" />
-            <option value="$PROJECT_DIR$/../platform5/scubs/project" />
             <option value="$PROJECT_DIR$/../platform5/server" />
             <option value="$PROJECT_DIR$/../platform5/server/project" />
             <option value="$PROJECT_DIR$/../platform5/shared/domain" />
             <option value="$PROJECT_DIR$/../platform5/shared/domain/project" />
-            <option value="$PROJECT_DIR$/../platform5/shared/jsonFormats" />
-            <option value="$PROJECT_DIR$/../platform5/shared/jsonFormats/project" />
             <option value="$PROJECT_DIR$/../platform5/shared/macros" />
             <option value="$PROJECT_DIR$/../platform5/shared/macros/project" />
             <option value="$PROJECT_DIR$/../platform5/shared/protocol" />
             <option value="$PROJECT_DIR$/../platform5/shared/protocol/project" />
+            <option value="$PROJECT_DIR$/../platform5/utils" />
+            <option value="$PROJECT_DIR$/../platform5/utils/project" />
           </set>
         </option>
         <option name="sbtVersion" value="1.1.0" />

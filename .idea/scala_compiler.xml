@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ScalaCompilerConfiguration">
     <profile name="SBT 1" modules="platform5" />
-    <profile name="SBT 2" modules="terminal,core,scubs,server,domain,jsonFormats,macros,protocol">
+    <profile name="SBT 2" modules="">
       <option name="macros" value="true" />
     </profile>
     <profile name="SBT 3" modules="akka-persistence-jdbc">
@@ -19,6 +19,44 @@
         <parameter value="-Ypartial-unification" />
         <parameter value="-Ydelambdafy:method" />
       </parameters>
+    </profile>
+    <profile name="sbt 1" modules="core,server,domain,macros,protocol,utils">
+      <option name="deprecationWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="UTF-8" />
+        <parameter value="-Ypartial-unification" />
+      </parameters>
+      <plugins>
+        <plugin path="C:\Users\moroz\.ivy2\cache\org.scalamacros\paradise_2.12.6\jars\paradise_2.12.6-2.1.1.jar" />
+      </plugins>
+    </profile>
+    <profile name="sbt 2" modules="jsonFormats">
+      <option name="deprecationWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="UTF-8" />
+        <parameter value="-Ypartial-unification" />
+        <parameter value="-Ycache-plugin-class-loader:last-modified" />
+        <parameter value="-Ycache-macro-class-loader:last-modified" />
+      </parameters>
+    </profile>
+    <profile name="sbt 3" modules="scubs">
+      <option name="deprecationWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="UTF-8" />
+        <parameter value="-Ypartial-unification" />
+      </parameters>
+    </profile>
+    <profile name="sbt 4" modules="terminal">
+      <option name="macros" value="true" />
+      <parameters>
+        <parameter value="-Ypartial-unification" />
+      </parameters>
+      <plugins>
+        <plugin path="C:\Users\moroz\.ivy2\cache\org.scalamacros\paradise_2.12.6\jars\paradise_2.12.6-2.1.1.jar" />
+      </plugins>
     </profile>
   </component>
 </project>
