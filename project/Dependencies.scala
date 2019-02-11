@@ -6,12 +6,12 @@ object Dependencies {
     val scala = "2.12.6"
     val platform5 = "1.0"
     val slf4j = "1.7.12"
-    val akka = "2.5.13"
+    val akka = "2.5.18"
     val log4j = "2.8.2"
     val disruptor = "3.3.6"
     val barcode4j = "2.1"
     val scalaLogging = "3.5.0"
-    val pdfbox = "2.0.7"
+    val pdfbox = "2.0.13"
     val jna = "4.2.1"
     val jSerialComm = "1.3.11"
     val jsch = "0.1.54"
@@ -50,7 +50,9 @@ object Dependencies {
     "org.apache.pdfbox" % "pdfbox" % Versions.pdfbox % Compile,
 
     //rfid9809 scanner jna api
-    "com.nativelibs4java" % "jnaerator-runtime" % Versions.jnaerator
+    "com.nativelibs4java" % "jnaerator-runtime" % Versions.jnaerator,
+
+    "org.rxtx" % "rxtx" % "2.1.7"
 
   ))
 }
