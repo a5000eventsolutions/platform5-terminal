@@ -207,6 +207,10 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
       data.wsClient ! Pong
       stay() using data.copy(lastActivity = System.currentTimeMillis())
 
+    case Event(msg: ServerMessage, data: Data.Working) ⇒
+      logger.info(s"Push from server: ${msg.msg.toString}")
+      stay() using data.copy(lastActivity = System.currentTimeMillis())
+
     case Event(unknown, data: Data.Working) ⇒
       logger.info(s"Unknown event received ${unknown.toString} at state Working")
       stay()
