@@ -1,3 +1,4 @@
 -Dplatform5.static.resourcesRoot=./../webapp -Xms512m -Xmx512m
 -Dconfig.file=..\conf\application.conf
 -Dfile.encoding=UTF-8
+-Djava.library.path=C:\repos\platform5-terminal\src\universal\rxtx

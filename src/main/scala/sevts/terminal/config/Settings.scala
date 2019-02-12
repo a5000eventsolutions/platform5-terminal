@@ -201,6 +201,25 @@ object Settings {
     case class PrinterConfig(enabled: Boolean, dpi: Int, page: PageConfig, devices: Devices)
   }
 
+  object TripodConfig {
+
+    def apply(config: Config): TripodConfig = {
+      TripodConfig(
+        enabled = config.getBoolean("enabled"),
+        directionEnter = config.getString("directionEnter"),
+        directionExit = config.getString("directionExit"),
+        direction = config.getString("direction").toUpperCase(),
+        port = config.getString("port")
+      )
+    }
+  }
+
+  case class TripodConfig(enabled: Boolean,
+                          directionEnter: String,
+                          directionExit: String,
+                          direction: String,
+                          port: String)
+
 }
 
 class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
@@ -236,4 +255,6 @@ class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
   val serverPort = config.getString("platform5.server.remote.httpPort")
 
   val organisationId = Id[Organisation](config.getString("organizationId"))
+
+  val tripod = TripodConfig(config.getConfig("platform5.terminal.config.tripod"))
 }

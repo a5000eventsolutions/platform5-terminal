@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    val scala = "2.12.6"
+    val scala = "2.12.8"
     val platform5 = "1.0"
     val slf4j = "1.7.12"
     val akka = "2.5.18"
@@ -26,7 +26,8 @@ object Dependencies {
 //    "sevts.platform5" %% "domain" % Versions.platform5,
 
     "com.twitter" % "chill-akka_2.12" % "0.9.2",
-    compilerPlugin("org.scalamacros" % "paradise_2.12.6" % "2.1.1"),
+    compilerPlugin("org.scalamacros" % "paradise_2.12.8" % "2.1.1"),
+
     // Logging
     "com.typesafe.scala-logging" %% "scala-logging" % Versions.scalaLogging % Compile,
     "com.lmax" % "disruptor" % Versions.disruptor,
@@ -52,8 +53,8 @@ object Dependencies {
     //rfid9809 scanner jna api
     "com.nativelibs4java" % "jnaerator-runtime" % Versions.jnaerator,
 
-    "org.rxtx" % "rxtx" % "2.1.7"
-
+   // "org.rxtx" % "rxtx" % "2.1.7"
+    "com.jamierf" % "rxtx" % "1.1"
   ))
 }
 

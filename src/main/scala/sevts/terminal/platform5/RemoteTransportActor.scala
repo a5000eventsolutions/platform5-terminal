@@ -209,6 +209,7 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
 
     case Event(msg: ServerMessage, data: Data.Working) ⇒
       logger.info(s"Push from server: ${msg.msg.toString}")
+      context.system.eventStream.publish(msg)
       stay() using data.copy(lastActivity = System.currentTimeMillis())
 
     case Event(unknown, data: Data.Working) ⇒

@@ -1,5 +1,6 @@
 package sevts.terminal.tripod;
 
+import com.jamierf.rxtx.RXTXLoader;
 import gnu.io.CommPortIdentifier;
 import gnu.io.NoSuchPortException;
 import gnu.io.PortInUseException;
@@ -26,6 +27,7 @@ public class BravoTripodImpl implements BravoTripod {
 
     public void connect(String portIdentifier) throws IOException {
         try {
+            RXTXLoader.load();
             CommPortIdentifier idf = CommPortIdentifier.getPortIdentifier(portIdentifier);
             this.serialPort = (SerialPort)idf.open(TripodController.class.getCanonicalName(), 30000);
             this.serialPort.setSerialPortParams(9600, 8, 1, 2);

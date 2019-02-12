@@ -12,7 +12,8 @@ lazy val commonSettings = Seq(
   version := "1.0",
   scalaVersion := Dependencies.Versions.scala,
   scalacOptions ++= Seq(
-    "-language:experimental.macros",
+    "-deprecation",
+    "-encoding", "UTF-8",
     "-Ypartial-unification"
   ),
   resolvers ++= Seq(
@@ -41,7 +42,7 @@ lazy val terminal = (project in file("./"))
   .settings( commonSettings: _* )
   .settings(
     libraryDependencies := Dependencies.terminal.value,
-    dependencyOverrides +=  "scala-lang.modules" % "scala-xml_2.12" % "1.0.6",
+   // dependencyOverrides +=  "scala-lang.modules" % "scala-xml_2.12" % "1.0.6",
     dependencyOverrides +=  "javax.activation" % "activation" % "1.1.1"
   )
   .dependsOn(protocolRef)
