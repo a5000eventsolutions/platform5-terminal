@@ -49,7 +49,7 @@ class TripodControlActor(injector: Injector) extends Actor with LazyLogging {
       msg.msg match {
         case data: AccessControlData ⇒
           data.data.result match {
-            case CheckAccessResult.Allowed ⇒ openDoor(data.data.tag)
+            case CheckAccessResult.Allowed ⇒ openDoor(data.data.tag, data.data.inputData.head)
             case _ ⇒ closeDoor()
           }
         case _ ⇒
@@ -60,22 +60,27 @@ class TripodControlActor(injector: Injector) extends Actor with LazyLogging {
 
   }
 
-  private def openDoor(tag: Option[String]) = {
+  private def openDoor(tag: Option[String], input: String) = {
     val NUMBER_OF_ATTEMPTS = 3
-    val direction = getMonitorDirection(tag)
-    logger.info(s"Open door direction: ${direction.name()}")
-    controller.setDoorStatus(TripodStatus.getTripodStatusByDirectionType(direction), NUMBER_OF_ATTEMPTS)
+    val status = getTripodDoorStatus(tag, input)
+    logger.info(s"Open door direction: ${status.name()}")
+    controller.setDoorStatus(status, NUMBER_OF_ATTEMPTS)
   }
 
-  private def getMonitorDirection(tagOpt: Option[String]): DirectionType = {
+  private def getTripodDoorStatus(tagOpt: Option[String], input: String): TripodStatus = {
     tagOpt.flatMap(t ⇒ if(t.isEmpty) None else Some(t)).map { tag ⇒
-      if(injector.settings.tripod.directionEnter == tag) { DirectionType.ENTER }
-      else if (injector.settings.tripod.directionExit == tag) { DirectionType.EXIT }
+      if(injector.settings.tripod.directionEnter == tag) { TripodStatus.ENTER }
+      else if (injector.settings.tripod.directionExit == tag) { TripodStatus.EXIT }
+      else if (injector.settings.tripod.ENTER_ALWAYS == input) { TripodStatus.ENTER_ALWAYS }
+      else if (injector.settings.tripod.EXIT_ALWAYS == input) { TripodStatus.EXIT_ALWAYS }
+      else if (injector.settings.tripod.CLOSE == input) { TripodStatus.CLOSE }
+      else if (injector.settings.tripod.BLOCK == input) { TripodStatus.BLOCK}
+      else if (injector.settings.tripod.TWO_WAY == input) { TripodStatus.TWO_WAY }
       else {
         logger.error(s"Invalid tag${tag}")
         throw new Exception(s"Invalid tag${tag}")
       }
-    }.getOrElse(DirectionType.EXIT)
+    }.getOrElse(TripodStatus.EXIT)
   }
 
   private def closeDoor() = {

@@ -216,7 +216,13 @@ object Settings {
         directionEnter = config.getString("directionEnter"),
         directionExit = config.getString("directionExit"),
         direction = config.getString("direction").toUpperCase(),
-        port = config.getString("port")
+        port = config.getString("port"),
+
+        ENTER_ALWAYS = config.getString("ENTER_ALWAYS"),
+        EXIT_ALWAYS = config.getString("EXIT_ALWAYS"),
+        TWO_WAY = config.getString("TWO_WAY"),
+        CLOSE = config.getString("CLOSE"),
+        BLOCK = config.getString("BLOCK")
       )
     }
   }
@@ -225,7 +231,13 @@ object Settings {
                           directionEnter: String,
                           directionExit: String,
                           direction: String,
-                          port: String)
+                          port: String,
+                          ENTER_ALWAYS: String,
+                          EXIT_ALWAYS: String,
+                          TWO_WAY: String,
+                          CLOSE: String,
+                          BLOCK: String
+                         )
 
 }
 
