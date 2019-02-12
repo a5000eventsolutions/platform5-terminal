@@ -45,6 +45,7 @@ class TripodControlActor(injector: Injector) extends Actor with LazyLogging {
   override def receive = {
 
     case msg: ServerMessage ⇒
+      logger.info(s"Tripod command: ${msg.msg.terminalId}")
       msg.msg match {
         case data: AccessControlData ⇒
           data.data.result match {

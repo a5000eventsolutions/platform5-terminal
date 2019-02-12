@@ -20,17 +20,6 @@
         <parameter value="-Ydelambdafy:method" />
       </parameters>
     </profile>
-    <profile name="sbt 1" modules="core,server,domain,macros,protocol,utils">
-      <option name="deprecationWarnings" value="true" />
-      <parameters>
-        <parameter value="-encoding" />
-        <parameter value="UTF-8" />
-        <parameter value="-Ypartial-unification" />
-      </parameters>
-      <plugins>
-        <plugin path="C:\Users\moroz\.ivy2\cache\org.scalamacros\paradise_2.12.6\jars\paradise_2.12.6-2.1.1.jar" />
-      </plugins>
-    </profile>
     <profile name="sbt 2" modules="jsonFormats">
       <option name="deprecationWarnings" value="true" />
       <parameters>
@@ -49,13 +38,15 @@
         <parameter value="-Ypartial-unification" />
       </parameters>
     </profile>
-    <profile name="sbt 4" modules="terminal">
-      <option name="macros" value="true" />
+    <profile name="sbt 5" modules="terminal,core,server,domain,macros,protocol,utils">
+      <option name="deprecationWarnings" value="true" />
       <parameters>
+        <parameter value="-encoding" />
+        <parameter value="UTF-8" />
         <parameter value="-Ypartial-unification" />
       </parameters>
       <plugins>
-        <plugin path="C:\Users\moroz\.ivy2\cache\org.scalamacros\paradise_2.12.6\jars\paradise_2.12.6-2.1.1.jar" />
+        <plugin path="C:\Users\moroz\.ivy2\cache\org.scalamacros\paradise_2.12.8\jars\paradise_2.12.8-2.1.1.jar" />
       </plugins>
     </profile>
   </component>
