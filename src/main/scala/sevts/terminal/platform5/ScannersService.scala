@@ -27,7 +27,7 @@ object ScannersService extends LazyLogging {
 
   private def convertEvent(terminalId: Id[Terminal], event: Message): Seq[TerminalEvent] = {
     event match {
-      case ScannerMessage(reaction, _, value, _, badgeSearch, formList) ⇒
+      case ScannerMessage(reaction, _, value, _, badgeSearch, formList, tag) ⇒
         logger.info("Terminal push message")
         reaction match {
           case Reaction.OpenFormData ⇒
@@ -35,7 +35,7 @@ object ScannersService extends LazyLogging {
             Seq(OpenFormData(terminalId, value, badgeSearch.getOrElse(false), formList))
           case Reaction.CheckAccess ⇒
             logger.info(s"Check badge access $value")
-            Seq(CheckBadgeAccess(terminalId, value))
+            Seq(CheckBadgeAccess(terminalId, value, tag))
           case Reaction.AssignBarcodeValue ⇒
             logger.info(s"Assign barcode value: `$value`")
             Seq(AssignBarcodeValue(terminalId, value))

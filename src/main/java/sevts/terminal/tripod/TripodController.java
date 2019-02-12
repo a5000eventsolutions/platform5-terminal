@@ -68,7 +68,7 @@ public class TripodController {
     }
 
     public void setDoorStatus(TripodStatus status) throws TripodException {
-        status = TripodStatus.revertByDirectionType(status, this.getDirectionType());
+        //status = TripodStatus.revertByDirectionType(status, this.getDirectionType());
 
         try {
             this.driver.setDoorStatus(this.doorStatusMonitor.checkServerCommand(status));

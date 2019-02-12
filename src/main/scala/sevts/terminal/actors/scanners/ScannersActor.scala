@@ -62,7 +62,8 @@ class ScannersActor(injector: Injector) extends Actor with LazyLogging {
                 formId = scanner.parameters.getString("formId"),
                 value = processedValue,
                 badgeSearch = Some(badgeSearch),
-                formFields = scanner.parameters.getStringList("formList").asScala.map(id ⇒ Id[FormField](id))
+                formFields = scanner.parameters.getStringList("formList").asScala.map(id ⇒ Id[FormField](id)),
+                tag = scanner.tag
               ))
           }
         case None ⇒

@@ -49,7 +49,7 @@ class TripodControlActor(injector: Injector) extends Actor with LazyLogging {
       msg.msg match {
         case data: AccessControlData ⇒
           data.data.result match {
-            case CheckAccessResult.Allowed ⇒ openDoor(data.monitors)
+            case CheckAccessResult.Allowed ⇒ openDoor(data.data.tag)
             case _ ⇒ closeDoor()
           }
         case _ ⇒
@@ -60,18 +60,21 @@ class TripodControlActor(injector: Injector) extends Actor with LazyLogging {
 
   }
 
-  private def openDoor(monitors: Seq[Monitor]) = {
+  private def openDoor(tag: Option[String]) = {
     val NUMBER_OF_ATTEMPTS = 3
-    val direction = getMonitorDirection(monitors)
+    val direction = getMonitorDirection(tag)
     logger.info(s"Open door direction: ${direction.name()}")
     controller.setDoorStatus(TripodStatus.getTripodStatusByDirectionType(direction), NUMBER_OF_ATTEMPTS)
   }
 
-  private def getMonitorDirection(monitors: Seq[Monitor]): DirectionType = {
-    monitors.headOption.map { monitor ⇒
-      if(injector.settings.tripod.directionEnter == monitor.name) {
-        DirectionType.ENTER
-      } else { DirectionType.EXIT }
+  private def getMonitorDirection(tagOpt: Option[String]): DirectionType = {
+    tagOpt.flatMap(t ⇒ if(t.isEmpty) None else Some(t)).map { tag ⇒
+      if(injector.settings.tripod.directionEnter == tag) { DirectionType.ENTER }
+      else if (injector.settings.tripod.directionExit == tag) { DirectionType.EXIT }
+      else {
+        logger.error(s"Invalid tag${tag}")
+        throw new Exception(s"Invalid tag${tag}")
+      }
     }.getOrElse(DirectionType.EXIT)
   }
 

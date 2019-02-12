@@ -92,9 +92,12 @@ object Settings {
     }
   }
 
-  case class ScannerConfig(name: String, device: DeviceConfig, reaction: ReactionConfig,
+  case class ScannerConfig(name: String,
+                           device: DeviceConfig,
+                           reaction: ReactionConfig,
                            format: FormatConfig,
-                           parameters: Config)
+                           parameters: Config,
+                           tag: Option[String])
   object ScannerConfig {
     def apply(config: Config, rootConfig: Settings): Option[ScannerConfig] = {
       for {
@@ -103,9 +106,12 @@ object Settings {
         format ← rootConfig.findFormat(config.getString("format"))
       } yield {
         ScannerConfig(
-          config.getString("name"),
-          device, reaction, format,
-          config.getConfig("parameters")
+          name = config.getString("name"),
+          device = device,
+          reaction = reaction,
+          format = format,
+          parameters = config.getConfig("parameters"),
+          tag = Option(config.getString("tag"))
         )
       }
     }
