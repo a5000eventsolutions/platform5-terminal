@@ -69,13 +69,13 @@ class TripodControlActor(injector: Injector) extends Actor with LazyLogging {
 
   private def getTripodDoorStatus(tagOpt: Option[String], input: String): TripodStatus = {
     tagOpt.flatMap(t ⇒ if(t.isEmpty) None else Some(t)).map { tag ⇒
-      if(injector.settings.tripod.directionEnter == tag) { TripodStatus.ENTER }
-      else if (injector.settings.tripod.directionExit == tag) { TripodStatus.EXIT }
-      else if (injector.settings.tripod.ENTER_ALWAYS == input) { TripodStatus.ENTER_ALWAYS }
+      if (injector.settings.tripod.ENTER_ALWAYS == input) { TripodStatus.ENTER_ALWAYS }
       else if (injector.settings.tripod.EXIT_ALWAYS == input) { TripodStatus.EXIT_ALWAYS }
       else if (injector.settings.tripod.CLOSE == input) { TripodStatus.CLOSE }
       else if (injector.settings.tripod.BLOCK == input) { TripodStatus.BLOCK}
       else if (injector.settings.tripod.TWO_WAY == input) { TripodStatus.TWO_WAY }
+      else if(injector.settings.tripod.directionEnter == tag) { TripodStatus.ENTER }
+      else if (injector.settings.tripod.directionExit == tag) { TripodStatus.EXIT }
       else {
         logger.error(s"Invalid tag${tag}")
         throw new Exception(s"Invalid tag${tag}")
