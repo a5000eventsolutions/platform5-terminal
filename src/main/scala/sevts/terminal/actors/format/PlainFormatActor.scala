@@ -33,6 +33,11 @@ class PlainFormatActor(config: FormatConfig) extends Actor with LazyLogging {
           value
       }
     } else value
-    Response.Result(Processed.StringData(result))
+    val renderedTemplate = renderTemplate(config.template, result)
+    Response.Result(Processed.StringData(renderedTemplate))
+  }
+
+  private def renderTemplate(tpl: String, data: String): String = {
+    tpl.replace("$data$", data)
   }
 }

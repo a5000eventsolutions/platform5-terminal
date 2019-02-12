@@ -111,13 +111,14 @@ object Settings {
     }
   }
 
-  case class FormatConfig(name: String, driverType: FormatType, parameters: Config)
+  case class FormatConfig(name: String, driverType: FormatType, template: String, parameters: Config)
   object FormatConfig {
     def apply(config: Config): FormatConfig = {
       FormatConfig(
-        config.getString("name"),
-        FormatType(config.getString("driverType")),
-        config.getConfig("parameters")
+        name = config.getString("name"),
+        driverType = FormatType(config.getString("driverType")),
+        template = config.getString("template"),
+        parameters = config.getConfig("parameters")
       )
     }
   }

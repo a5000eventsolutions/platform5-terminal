@@ -1,6 +1,5 @@
 package sevts.terminal.tripod;
 
-import com.jamierf.rxtx.RXTXLoader;
 import gnu.io.CommPortIdentifier;
 import gnu.io.NoSuchPortException;
 import gnu.io.PortInUseException;

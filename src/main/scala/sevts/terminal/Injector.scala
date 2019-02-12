@@ -32,8 +32,9 @@ trait Injector extends LazyLogging {
   val formatsActor = system.actorOf(FormatsActor.props(settings), name = "formats-actor")
   val scannersActor = system.actorOf(ScannersActor.props(this), name = "scanners-actor")
 
-  val tripodActor =
+  val tripodActor = if(settings.tripod.enabled) {
     system.actorOf(TripodControlActor.props(this), name = "tripod-actor")
+  }
 
   val endpointActor = system.actorOf(RemoteTransportActor.props(this), name = "remote-transport-actor")
 }
