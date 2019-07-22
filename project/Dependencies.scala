@@ -25,7 +25,7 @@ object Dependencies {
 //    "sevts.platform5" %% "protocol" % Versions.platform5,
 //    "sevts.platform5" %% "domain" % Versions.platform5,
 
-    "com.twitter" % "chill-akka_2.12" % "0.9.2",
+    "com.twitter" % "chill-akka_2.12" % "0.9.3",
     compilerPlugin("org.scalamacros" % "paradise_2.12.8" % "2.1.1"),
 
     // Logging

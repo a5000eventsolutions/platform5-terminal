@@ -92,12 +92,12 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
 
     case bm: BinaryMessage ⇒
       val future = bm.dataStream.runFold(ByteString())(_ ++ _)
-      val deserialized = future map { bytes ⇒
-        injector.serialization.deserialize(bytes.toArray, classOf[Protocol]).recover {
-          case NonFatal(e) ⇒
-            logger.info(e.getMessage)
-            throw e
-        }.getOrElse(throw FailureType.Unknown)
+      val deserialized = future.map { bytes ⇒
+        injector.serialization.deserialize(bytes.toArray, classOf[Protocol]).get
+      }.recover {
+        case NonFatal(e) =>
+          logger.error(e.getMessage, e)
+          FailureType.Exception(e.getMessage)
       }
       deserialized pipeTo parent
 
