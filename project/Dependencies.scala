@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    val scala = "2.12.10"
+    val scala = "2.13.1"
     val platform5 = "1.0"
     val slf4j = "1.7.25"
     val akka = "2.6.1"
@@ -16,7 +16,7 @@ object Dependencies {
     val jSerialComm = "1.3.11"
     val jsch = "0.1.54"
     val jnaerator = "0.12"
-    val scalatest = "3.0.1"
+    val scalatest = "3.0.8"
   }
 
 
@@ -26,7 +26,6 @@ object Dependencies {
 //    "sevts.platform5" %% "domain" % Versions.platform5,
 
     "com.twitter" % "chill-akka_2.12" % "0.9.3",
-    compilerPlugin("org.scalamacros" % "paradise_2.12.8" % "2.1.1"),
 
     // Logging
     "com.typesafe.scala-logging" %% "scala-logging" % Versions.scalaLogging % Compile,

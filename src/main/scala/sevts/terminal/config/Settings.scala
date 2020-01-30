@@ -22,11 +22,11 @@ object Settings {
 
     def apply(value: String): DeviceDriverType = {
       value.toLowerCase match {
-        case "serialport" ⇒ DeviceDriverType.SerialPort
-        case "emulator"   ⇒ DeviceDriverType.Emulator
-        case "rfid9809"   ⇒ DeviceDriverType.RRU9809
-        case "omnikey"    ⇒ DeviceDriverType.Omnikey
-        case e: String ⇒ throw new IllegalStateException(s"Unknown device driver type $e")
+        case "serialport" => DeviceDriverType.SerialPort
+        case "emulator"   => DeviceDriverType.Emulator
+        case "rfid9809"   => DeviceDriverType.RRU9809
+        case "omnikey"    => DeviceDriverType.Omnikey
+        case e: String => throw new IllegalStateException(s"Unknown device driver type $e")
       }
     }
   }
@@ -41,12 +41,12 @@ object Settings {
 
     def apply(value: String): ReactionType = {
       value.toLowerCase match {
-        case "redirect" ⇒ ReactionType.Redirect
-        case "print" ⇒ ReactionType.Print
-        case "check_badge" ⇒ ReactionType.CheckBadge
-        case "assign_barcode" ⇒ ReactionType.AssignBarcode
-        case "open_and_assign" ⇒ ReactionType.OpenAndAssignBarcode
-        case e: String ⇒ throw new IllegalStateException(s"Unknown reaction type `$e`")
+        case "redirect" => ReactionType.Redirect
+        case "print" => ReactionType.Print
+        case "check_badge" => ReactionType.CheckBadge
+        case "assign_barcode" => ReactionType.AssignBarcode
+        case "open_and_assign" => ReactionType.OpenAndAssignBarcode
+        case e: String => throw new IllegalStateException(s"Unknown reaction type `$e`")
       }
     }
   }
@@ -57,8 +57,8 @@ object Settings {
 
     def apply(value: String): FormatType = {
       value.toLowerCase match {
-        case "plain" ⇒ FormatType.Plain
-        case e: String ⇒ throw new IllegalStateException(s"Unknown format type `$e`")
+        case "plain" => FormatType.Plain
+        case e: String => throw new IllegalStateException(s"Unknown format type `$e`")
       }
     }
   }
@@ -68,15 +68,15 @@ object Settings {
   case class ReactionConfig(name: String, tpe: ReactionType, parameters: Config) {
     def toReaction = {
       tpe match {
-        case ReactionType.Print ⇒
+        case ReactionType.Print =>
           Reaction.PrintBadge(parameters.getString("badgeTypeId"))
-        case ReactionType.Redirect ⇒
+        case ReactionType.Redirect =>
           Reaction.OpenFormData
-        case ReactionType.CheckBadge ⇒
+        case ReactionType.CheckBadge =>
           Reaction.CheckAccess
-        case ReactionType.AssignBarcode ⇒
+        case ReactionType.AssignBarcode =>
           Reaction.AssignBarcodeValue
-        case ReactionType.OpenAndAssignBarcode ⇒
+        case ReactionType.OpenAndAssignBarcode =>
           Reaction.OpenAndAssign
 
       }
@@ -159,7 +159,7 @@ object Settings {
           username =config.getString("username"),
           password = config.getString("password"),
           terminal = config.getString("terminal"),
-          monitors = config.getConfigList("monitors").asScala.take(5).map(BrowserMonitor(_))
+          monitors = config.getConfigList("monitors").asScala.toSeq.take(5).map(BrowserMonitor(_))
         )
       }
     }
@@ -201,7 +201,7 @@ object Settings {
     }
 
     case class Devices(config: Config) {
-      val list = config.entrySet().asScala.map { (entry: Entry[String, ConfigValue]) ⇒
+      val list = config.entrySet().asScala.map { (entry: Entry[String, ConfigValue]) =>
         entry.getKey → entry.getValue.unwrapped().asInstanceOf[String]
       }.toMap
     }
@@ -252,18 +252,18 @@ class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
   def findFormat(formatName: String) =
     config.getConfigList("platform5.terminal.config.formats").asScala
       .find(_.getString("name") == formatName )
-      .map(r ⇒ FormatConfig(r))
+      .map(r => FormatConfig(r))
 
 
   def findReaction(reactionName: String) =
     config.getConfigList("platform5.terminal.config.reactions").asScala
       .find(_.getString("name") == reactionName )
-      .map(r ⇒ ReactionConfig(r))
+      .map(r => ReactionConfig(r))
 
   def findDevice(deviceName: String) =
     config.getConfigList("platform5.terminal.config.devices").asScala
       .find(_.getString("name") == deviceName )
-      .map(r ⇒ DeviceConfig(r))
+      .map(r => DeviceConfig(r))
 
   val autoLoginConfig = TerminalConfig.AutoLogin(config.getConfig("platform5.terminal.autoLogin"))
   val terminalConfig = TerminalConfig.Devices(config.getConfig("platform5.terminal.config"), this)

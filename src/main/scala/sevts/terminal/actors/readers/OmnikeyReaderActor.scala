@@ -58,28 +58,28 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor
 
   def receive = {
 
-    case Command.StartTerminalRead(terminal: CardTerminal) ⇒
+    case Command.StartTerminalRead(terminal: CardTerminal) =>
       context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
 
-    case Command.ReadCard(terminal) ⇒
-      tryReadCard(terminal) foreach { result ⇒
+    case Command.ReadCard(terminal) =>
+      tryReadCard(terminal) foreach { result =>
         logger.info(s"Read value: $result")
         listener ! ReadersActor.DeviceEvent.DataReceived(device.name, result)
       }
       context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
 
-    case msg ⇒
+    case msg =>
       logger.error("Unknown message received ${msg.toString}")
   }
 
   def connect() = {
-    import scala.collection.JavaConversions._
+    import scala.jdk.CollectionConverters._
     var selectedTerminal: CardTerminal = null
     try {
       while (selectedTerminal == null) {
         {
           val terminals: CardTerminals = TerminalFactory.getDefault.terminals
-          val terminalList: util.List[CardTerminal] = terminals.list
+          val terminalList = terminals.list.asScala
           for (terminal <- terminalList) {
             logger.info(s"Available terminal: ${terminal.getName}")
             if (portName == terminal.getName) {
@@ -91,7 +91,7 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor
             Thread.sleep(1000L)
           }
           catch {
-            case e: InterruptedException ⇒
+            case e: InterruptedException =>
               logger.error("Interrupted exception error by connect Omnikey reader")
           }
         }
@@ -99,7 +99,7 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor
       self ! Command.StartTerminalRead(selectedTerminal)
     }
     catch {
-      case e: Exception ⇒
+      case e: Exception =>
         logger.error(e.getMessage, e)
         throw new IOException(e.getMessage, e)
     }
@@ -118,10 +118,10 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor
       }
     }
     catch {
-      case e: CardException ⇒
+      case e: CardException =>
         logger.error(e.getMessage, e)
         None
-      case e: Throwable if NonFatal(e) ⇒
+      case e: Throwable if NonFatal(e) =>
         logger.error(e.getMessage, e)
         None
     }
@@ -132,6 +132,6 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor
   }
 
   def bytearray2intarray(barray: Array[Byte]) = {
-    barray.map(b ⇒ b & 0xff)
+    barray.map(b => b & 0xff)
   }
 }

@@ -36,7 +36,7 @@ class TripodControlActor(injector: Injector) extends Actor with LazyLogging {
         context.system.eventStream.subscribe(this.self, classOf[ServerMessage])
         logger.info("Tripod started successfully")
       } catch {
-        case NonFatal(e) ⇒
+        case NonFatal(e) =>
           logger.error(e.getMessage, e)
       }
     }
@@ -44,18 +44,18 @@ class TripodControlActor(injector: Injector) extends Actor with LazyLogging {
 
   override def receive = {
 
-    case msg: ServerMessage ⇒
+    case msg: ServerMessage =>
       logger.info(s"Tripod command: ${msg.msg.terminalId}")
       msg.msg match {
-        case data: AccessControlData ⇒
+        case data: AccessControlData =>
           data.data.result match {
-            case CheckAccessResult.Allowed ⇒ openDoor(data.data.tag, data.data.inputData.head)
-            case _ ⇒ closeDoor()
+            case CheckAccessResult.Allowed => openDoor(data.data.tag, data.data.inputData.head)
+            case _ => closeDoor()
           }
-        case _ ⇒
+        case _ =>
       }
 
-    case unknown ⇒
+    case unknown =>
       logger.error(s"Unknown tripod message ${unknown.toString}")
 
   }
@@ -68,7 +68,7 @@ class TripodControlActor(injector: Injector) extends Actor with LazyLogging {
   }
 
   private def getTripodDoorStatus(tagOpt: Option[String], input: String): TripodStatus = {
-    tagOpt.flatMap(t ⇒ if(t.isEmpty) None else Some(t)).map { tag ⇒
+    tagOpt.flatMap(t => if(t.isEmpty) None else Some(t)).map { tag =>
       if (injector.settings.tripod.ENTER_ALWAYS == input) { TripodStatus.ENTER_ALWAYS }
       else if (injector.settings.tripod.EXIT_ALWAYS == input) { TripodStatus.EXIT_ALWAYS }
       else if (injector.settings.tripod.CLOSE == input) { TripodStatus.CLOSE }

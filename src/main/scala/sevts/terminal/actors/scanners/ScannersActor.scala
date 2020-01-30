@@ -39,16 +39,16 @@ class ScannersActor(injector: Injector) extends Actor with LazyLogging {
   implicit val timeout = Timeout(250.millis)
 
   override def receive: Receive = {
-    case Request.DataReceived(deviceName, data) ⇒
+    case Request.DataReceived(deviceName, data) =>
       val scanners = injector.settings.terminalConfig.scanners
-      (scanners.find(s ⇒ s.device.name == deviceName) match {
-        case Some(scanner) ⇒
+      (scanners.find(s => s.device.name == deviceName) match {
+        case Some(scanner) =>
           (injector.formatsActor ? FormatsActor.Request.Process(scanner, data)) map {
-            case FormatActor.Response.Result(processed) ⇒
+            case FormatActor.Response.Result(processed) =>
               val processedValue = processed match {
-                case FormatsActor.Processed.NumericData(value) ⇒ value.toString
-                case FormatsActor.Processed.StringData(value) ⇒ value
-                case e: Any ⇒ throw new IllegalStateException("Invalid terminal format; last format in " +
+                case FormatsActor.Processed.NumericData(value) => value.toString
+                case FormatsActor.Processed.StringData(value) => value
+                case e: Any => throw new IllegalStateException("Invalid terminal format; last format in " +
                   s"list should return either number or string, `$e` has been returned instead")
               }
 
@@ -62,11 +62,11 @@ class ScannersActor(injector: Injector) extends Actor with LazyLogging {
                 formId = scanner.parameters.getString("formId"),
                 value = processedValue,
                 badgeSearch = Some(badgeSearch),
-                formFields = scanner.parameters.getStringList("formList").asScala.map(id ⇒ Id[FormField](id)),
+                formFields = scanner.parameters.getStringList("formList").asScala.toSeq.map(id => Id[FormField](id)),
                 tag = scanner.tag
               ))
           }
-        case None ⇒
+        case None =>
           logger.info(s"Unable to find scanner associated with device $deviceName")
           Future(Response.Failure)
       }) pipeTo sender()
