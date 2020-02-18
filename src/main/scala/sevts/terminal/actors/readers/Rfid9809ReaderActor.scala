@@ -69,28 +69,28 @@ class Rfid9809ReaderActor(listener: ActorRef, device: DeviceConfig) extends Acto
 
   override def receive: Receive = {
 
-    case ReadEPC ⇒
-      readEPCTag(comPort) map { epcTag ⇒
+    case ReadEPC =>
+      readEPCTag(comPort) map { epcTag =>
         listener ! ReadersActor.DeviceEvent.EPCReceived(device.name, epcTag)
         self ! ReadTID
       } getOrElse  {
         context.system.scheduler.scheduleOnce(delay, self, ReadEPC)
       }
 
-    case ReadTID ⇒
-      readTID(comPort, epcTag, 15) map { (data: String) ⇒
+    case ReadTID =>
+      readTID(comPort, epcTag, 15) map { (data: String) =>
         listener ! ReadersActor.DeviceEvent.DataReceived(device.name, data)
         context.system.scheduler.scheduleOnce(writeTimeout, self, EpcWriteTimeOut)
       } getOrElse {
         context.system.scheduler.scheduleOnce(delay, self, ReadEPC)
       }
 
-    case EpcWriteTimeOut ⇒
+    case EpcWriteTimeOut =>
       logger.error("Epc data write timeout")
       context.system.scheduler.scheduleOnce(delay, self, ReadEPC)
 
-    case WriteEpcData(data: String) ⇒
-      writeEPC(comPort, epcTag, data.getBytes, 10) map { result ⇒
+    case WriteEpcData(data: String) =>
+      writeEPC(comPort, epcTag, data.getBytes, 10) map { result =>
         if(result == 0) {
           sender() ! WriteOk
         } else sender() ! WriteError
@@ -98,7 +98,7 @@ class Rfid9809ReaderActor(listener: ActorRef, device: DeviceConfig) extends Acto
         sender() ! WriteError
       }
 
-    case unknown ⇒
+    case unknown =>
       logger.info(unknown.toString)
   }
 

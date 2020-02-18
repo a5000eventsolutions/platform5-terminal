@@ -47,7 +47,7 @@ object AppServer extends LazyLogging {
     start()
 
     def receive = {
-      case _ ⇒
+      case _ =>
     }
   }
 

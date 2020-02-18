@@ -53,25 +53,25 @@ class SerialPortReader(listener: ActorRef, device: DeviceConfig) extends Actor w
   def initPorts(ports: Seq[SerialPort]) = {
     val configPort = device.parameters.getString("port")
 
-    ports.find(sp ⇒ sp.getSystemPortName == configPort) match {
-      case Some(port) ⇒
+    ports.find(sp => sp.getSystemPortName == configPort) match {
+      case Some(port) =>
         logger.info(s"Port activated: ${port.getSystemPortName}")
         port.setBaudRate(device.parameters.getInt("speed"))
         port.openPort()
         self ! Command.ListenPort(port)
-      case None ⇒
+      case None =>
         logger.error(s"Port $configPort not found!")
     }
   }
 
   def receive = {
-    case Command.ListenPort(port) ⇒
+    case Command.ListenPort(port) =>
       port.addDataListener(new SerialPortDataListener() {
         override def getListeningEvents() = SerialPort.LISTENING_EVENT_DATA_AVAILABLE
 
         override def serialEvent(event: SerialPortEvent) = {
           event.getEventType match {
-            case SerialPort.LISTENING_EVENT_DATA_AVAILABLE ⇒
+            case SerialPort.LISTENING_EVENT_DATA_AVAILABLE =>
               //waiting 50ms for full packet receive
               val portName = port.getSystemPortName
               if(!pendingPorts.contains(portName)) {
@@ -79,12 +79,12 @@ class SerialPortReader(listener: ActorRef, device: DeviceConfig) extends Actor w
                 system.scheduler.scheduleOnce(50 milliseconds, self,
                   Command.DataReceived(port))
               }
-            case e ⇒ logger.error("Unhandled serial event")
+            case e => logger.error("Unhandled serial event")
           }
         }
       })
 
-    case Command.DataReceived(port) ⇒
+    case Command.DataReceived(port) =>
       val result = Try {
         val newData = new Array[Byte](port.bytesAvailable)
         val numRead = port.readBytes(newData, newData.length)
@@ -93,7 +93,7 @@ class SerialPortReader(listener: ActorRef, device: DeviceConfig) extends Actor w
         listener ! ReadersActor.DeviceEvent.DataReceived(device.name, msg)
         pendingPorts = pendingPorts - port.getSystemPortName
       } recover {
-        case e: Throwable if NonFatal(e) ⇒
+        case e: Throwable if NonFatal(e) =>
           logger.error(e.getMessage, e)
           logger.error(s"Serial port ${port.getSystemPortName} error!")
           logger.info("Try to reinit port")
@@ -101,25 +101,25 @@ class SerialPortReader(listener: ActorRef, device: DeviceConfig) extends Actor w
       }
 
 
-    case Command.OpenPort(portName) ⇒
+    case Command.OpenPort(portName) =>
       val ports = SerialPort.getCommPorts
-      val result = ports find( port ⇒
-        port.getSystemPortName == portName) map { port ⇒
+      val result = ports find( port =>
+        port.getSystemPortName == portName) map { port =>
           port.openPort()
           Response.PortOpened(portName)
       } getOrElse Response.Error(s"Port $portName not found")
       sender() ! result
 
-    case Command.ClosePort(portName) ⇒
+    case Command.ClosePort(portName) =>
       val ports = SerialPort.getCommPorts
-      val result = ports find( port ⇒
-        port.getSystemPortName == portName) map { port ⇒
+      val result = ports find( port =>
+        port.getSystemPortName == portName) map { port =>
         port.closePort()
         Response.PortClosed(portName)
       } getOrElse Response.Error(s"Port $portName not found")
       sender() ! result
 
-    case msg ⇒
+    case msg =>
       logger.error("Unknown message received ${msg.toString}")
   }
 }

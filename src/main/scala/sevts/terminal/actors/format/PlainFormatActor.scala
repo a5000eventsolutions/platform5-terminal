@@ -17,7 +17,7 @@ class PlainFormatActor(config: FormatConfig) extends Actor with LazyLogging {
   import FormatActor._
 
   override def receive: Receive = {
-    case Request.Process(value) ⇒
+    case Request.Process(value) =>
       sender() ! process(value)
   }
 
@@ -25,14 +25,19 @@ class PlainFormatActor(config: FormatConfig) extends Actor with LazyLogging {
     val result = if(config.parameters.hasPath("regexp")) {
       val regexp = config.parameters.getString("regexp").r
       value match {
-        case regexp(id) ⇒
+        case regexp(id) =>
           logger.info(s"Regex found id: $id")
           id
-        case _ ⇒
+        case _ =>
           logger.info("Regex id not found")
           value
       }
     } else value
-    Response.Result(Processed.StringData(result))
+    val renderedTemplate = renderTemplate(config.template, result)
+    Response.Result(Processed.StringData(renderedTemplate))
+  }
+
+  private def renderTemplate(tpl: String, data: String): String = {
+    tpl.replace("$data$", data)
   }
 }

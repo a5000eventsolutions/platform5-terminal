@@ -8,6 +8,7 @@ import sevts.terminal.config.Settings.DeviceConfig
 
 import scala.concurrent.duration._
 import collection.JavaConverters._
+import scala.language.postfixOps
 
 
 object EmulatorReaderActor {
@@ -35,7 +36,7 @@ class EmulatorReaderActor(listener: ActorRef, config: DeviceConfig) extends Acto
   }
 
   override def receive: Receive = {
-    case Tick ⇒
+    case Tick =>
       listener ! ReadersActor.DeviceEvent.DataReceived(config.name, dataArray(index))
       index = index + 1
       if(index == dataArray.length) { index = 0 }

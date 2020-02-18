@@ -46,7 +46,7 @@ class BrowserRunner(settings: Settings) extends LazyLogging {
       logger.info(s"command line: $command")
       Runtime.getRuntime.exec(Array[String]("cmd", "/c", command))
     }.recover {
-      case NonFatal(e) ⇒
+      case NonFatal(e) =>
         logger.error("Unable to open Chrome browser")
         logger.error(e.getMessage, e)
     }

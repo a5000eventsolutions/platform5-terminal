@@ -30,15 +30,15 @@ class FormatsActor(settings: Settings) extends Actor {
   private var actors = Map[FormatType, ActorRef]()
 
   override def preStart() = {
-    settings.terminalConfig.formats.foreach { (format: FormatConfig) ⇒
+    settings.terminalConfig.formats.foreach { (format: FormatConfig) =>
       actors += format.driverType → (format.driverType match {
-        case FormatType.Plain ⇒ context.actorOf(PlainFormatActor.props(format))
+        case FormatType.Plain => context.actorOf(PlainFormatActor.props(format))
       })
     }
   }
 
   override def receive: Receive = {
-    case Request.Process(scannerConfig,data) ⇒
+    case Request.Process(scannerConfig,data) =>
         actors(scannerConfig.format.driverType).tell(FormatActor.Request.Process(data), sender())
   }
 }

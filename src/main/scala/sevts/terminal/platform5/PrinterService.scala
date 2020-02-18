@@ -2,8 +2,8 @@ package sevts.terminal.platform5
 
 import java.awt.print.{Book, PageFormat, Paper, PrinterJob}
 import java.io.ByteArrayInputStream
-import javax.print.{PrintService, PrintServiceLookup}
 
+import javax.print.{PrintService, PrintServiceLookup}
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.pdfbox.io.MemoryUsageSetting
@@ -16,6 +16,7 @@ import sevts.terminal.Injector
 
 import scala.concurrent.duration._
 import scala.concurrent.Future
+import scala.language.postfixOps
 import scala.util.control.NonFatal
 
 
@@ -39,7 +40,7 @@ class PrinterService(injector: Injector) extends LazyLogging {
       logger.info(s"Print task completed ${result.getJobName}")
       sevts.remote.protocol.Protocol.Enqueued(command.id, result.getJobName)
     }) recover {
-      case NonFatal(e) ⇒
+      case NonFatal(e) =>
         logger.error(e.getMessage, e)
         PrintError(command.id, e)
     }
@@ -51,7 +52,7 @@ class PrinterService(injector: Injector) extends LazyLogging {
     logger.info("==============================")
     logger.info("     System printers list     ")
     logger.info("==============================")
-    printServices foreach { service ⇒
+    printServices foreach { service =>
       logger.info(service.getName)
     }
     logger.info("==============================")
