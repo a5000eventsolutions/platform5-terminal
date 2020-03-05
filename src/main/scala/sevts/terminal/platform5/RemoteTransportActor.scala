@@ -200,7 +200,7 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
       }
 
     case Event(Terminated(actor), _) =>
-      logger.error("Terminated. Worked terminated")
+      logger.error("Terminal worker is down")
       stay()
 
     case Event(Ping, data: Data.Working) =>
