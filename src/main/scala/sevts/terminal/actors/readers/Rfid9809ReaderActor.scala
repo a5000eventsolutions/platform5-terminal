@@ -90,7 +90,7 @@ class Rfid9809ReaderActor(listener: ActorRef, device: DeviceConfig) extends Acto
       context.system.scheduler.scheduleOnce(delay, self, ReadEPC)
 
     case WriteEpcData(data: String) =>
-      writeEPC(comPort, epcTag, data.getBytes, 10) map { result =>
+      writeEPC(comPort, epcTag, data.getBytes.toIndexedSeq, 10) map { result =>
         if(result == 0) {
           sender() ! WriteOk
         } else sender() ! WriteError

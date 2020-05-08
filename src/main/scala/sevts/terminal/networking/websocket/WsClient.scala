@@ -18,6 +18,7 @@ import akka.pattern._
 import akka.stream.scaladsl.GraphDSL.Builder
 import sevts.remote.protocol.Protocol
 import sevts.server.domain.FailureType
+import sevts.server.utils.AkkaOps
 
 import scala.language.postfixOps
 import scala.util.Try
@@ -40,7 +41,7 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
 
   import sevts.server.protocol._
 
-  implicit val materializer = ActorMaterializer()
+  implicit val system = context.system
   implicit val ec = context.dispatcher
 
   def peekMatValue[T, M](src: Source[T, M]): (Source[T, M], Future[M]) = {
@@ -116,13 +117,13 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
   }
 }
 
-class AkkaWsClient(injector: Injector, val webSocketUrl: String, parent: ActorRef, source: Source[BinaryMessage, NotUsed]) extends LazyLogging {
+class AkkaWsClient(injector: Injector, val webSocketUrl: String, parent: ActorRef, source: Source[BinaryMessage, NotUsed])
+  extends LazyLogging with AkkaOps {
 
   val handlerFlow = Flow.fromSinkAndSource(Sink.actorRef[Message](parent, "connection closed"), source)
 
   implicit val system = injector.system
   implicit val ec = system.dispatcher
-  implicit val materializer = ActorMaterializer()
 
   private lazy val clientFlow: Flow[Message, Message, Future[WebSocketUpgradeResponse]] =
     Http().webSocketClientFlow(WebSocketRequest(webSocketUrl))

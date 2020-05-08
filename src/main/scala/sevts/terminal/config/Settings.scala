@@ -2,6 +2,7 @@ package sevts.terminal.config
 
 import java.awt.print.PageFormat
 import java.util.Map.Entry
+import java.util.concurrent.TimeUnit
 
 import com.typesafe.config._
 import com.typesafe.scalalogging.LazyLogging
@@ -9,7 +10,8 @@ import sevts.server.domain.{Id, Organisation}
 import sevts.server.remote.Reaction
 import sevts.terminal.config.Settings._
 
-import collection.JavaConverters._
+import scala.concurrent.duration.{Duration, TimeUnit}
+import scala.jdk.CollectionConverters._
 
 object Settings {
 
@@ -101,9 +103,9 @@ object Settings {
   object ScannerConfig {
     def apply(config: Config, rootConfig: Settings): Option[ScannerConfig] = {
       for {
-        device ← rootConfig.findDevice(config.getString("device"))
-        reaction ← rootConfig.findReaction(config.getString("reaction"))
-        format ← rootConfig.findFormat(config.getString("format"))
+        device <- rootConfig.findDevice(config.getString("device"))
+        reaction <- rootConfig.findReaction(config.getString("reaction"))
+        format <- rootConfig.findFormat(config.getString("format"))
       } yield {
         ScannerConfig(
           name = config.getString("name"),
@@ -202,7 +204,7 @@ object Settings {
 
     case class Devices(config: Config) {
       val list = config.entrySet().asScala.map { (entry: Entry[String, ConfigValue]) =>
-        entry.getKey → entry.getValue.unwrapped().asInstanceOf[String]
+        entry.getKey -> entry.getValue.unwrapped().asInstanceOf[String]
       }.toMap
     }
     case class PrinterConfig(enabled: Boolean, dpi: Int, page: PageConfig, devices: Devices)
@@ -238,6 +240,37 @@ object Settings {
                           CLOSE: String,
                           BLOCK: String
                          )
+
+  object UsbRelayConfig {
+
+    def apply(config: Config): UsbRelayConfig = {
+      UsbRelayConfig(
+        enabled = config.getBoolean("enabled"),
+        directionEnterTag = config.getString("directionEnterTag"),
+        directionExitTag = config.getString("directionExitTag"),
+
+        relaySerial = config.getString("relaySerial"),
+        enterChannelNum = config.getInt("enterChannelNum"),
+        exitChannelNum = config.getInt("exitChannelNum"),
+
+        closeTime = Duration.create(config.getDuration("closeTime").toMillis, TimeUnit.MILLISECONDS),
+        dllPath = config.getString("dllPath")
+      )
+    }
+
+  }
+
+  case class UsbRelayConfig(enabled: Boolean,
+                            directionEnterTag: String,
+                            directionExitTag: String,
+
+                            relaySerial: String,
+                            enterChannelNum: Int,
+                            exitChannelNum: Int,
+
+                            closeTime: Duration,
+                            dllPath: String
+                           )
 
 }
 
@@ -276,4 +309,6 @@ class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
   val organisationId = Id[Organisation](config.getString("organizationId"))
 
   val tripod = TripodConfig(config.getConfig("platform5.terminal.config.tripod"))
+
+  val usbRelay = UsbRelayConfig(config.getConfig("platform5.terminal.config.usbRelay"))
 }

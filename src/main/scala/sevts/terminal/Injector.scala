@@ -8,6 +8,7 @@ import sevts.terminal.actors.format.FormatsActor
 import sevts.terminal.actors.readers.ReadersActor
 import sevts.terminal.actors.scanners.ScannersActor
 import sevts.terminal.actors.tripod.TripodControlActor
+import sevts.terminal.actors.usbrelay.UsbRelayControlActor
 import sevts.terminal.config.Settings
 import sevts.terminal.platform5.RemoteTransportActor
 
@@ -34,6 +35,10 @@ trait Injector extends LazyLogging {
 
   val tripodActor = if(settings.tripod.enabled) {
     system.actorOf(TripodControlActor.props(this), name = "tripod-actor")
+  }
+
+  val usbRelayActor = if(settings.usbRelay.enabled) {
+    system.actorOf(UsbRelayControlActor.props(this), name = "usbrelay-actor")
   }
 
   val endpointActor = system.actorOf(RemoteTransportActor.props(this), name = "remote-transport-actor")

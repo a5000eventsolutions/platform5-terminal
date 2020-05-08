@@ -33,9 +33,9 @@ class PrinterService(injector: Injector) extends LazyLogging {
 
   def print(command: RemotePrintFile) = {
     (for {
-      deviceContextOpt ← resolvePrinterService(command.printer.id)
+      deviceContextOpt <- resolvePrinterService(command.printer.id)
       if deviceContextOpt.nonEmpty
-      result ← doPrint(command.fileMeta, command.file, deviceContextOpt.get)
+      result <- doPrint(command.fileMeta, command.file, deviceContextOpt.get)
     } yield {
       logger.info(s"Print task completed ${result.getJobName}")
       sevts.remote.protocol.Protocol.Enqueued(command.id, result.getJobName)

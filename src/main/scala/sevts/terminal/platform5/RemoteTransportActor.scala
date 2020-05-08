@@ -61,7 +61,7 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
   val settings = injector.settings
 
   def startHeartbeat() = {
-    context.system.scheduler.schedule(5 seconds,
+    context.system.scheduler.scheduleAtFixedRate(5 seconds,
       10 seconds,
       self,
       ActivityCheck

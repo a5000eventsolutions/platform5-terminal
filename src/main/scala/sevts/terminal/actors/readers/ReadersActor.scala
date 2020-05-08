@@ -83,16 +83,16 @@ case class ReadersActor(settings: Settings, Injector: Injector) extends Actor wi
     case Request.RegisterDevice(device) =>
       device.deviceDriverType match {
         case DeviceDriverType.Emulator =>
-          deviceActors += (device → context.actorOf(EmulatorReaderActor.props(self, device),
+          deviceActors += (device -> context.actorOf(EmulatorReaderActor.props(self, device),
             name = device.name + "-emulator-reader-actor"))
         case DeviceDriverType.SerialPort =>
-          deviceActors += (device → context.actorOf(SerialPortReader.props(self, device),
+          deviceActors += (device -> context.actorOf(SerialPortReader.props(self, device),
             name = device.name + "-serialport-reader-actor"))
         case DeviceDriverType.Omnikey =>
-          deviceActors += (device → context.actorOf(OmnikeyReaderActor.props(self, device),
+          deviceActors += (device -> context.actorOf(OmnikeyReaderActor.props(self, device),
             name = device.name + "-omnikey-reader-actor"))
         case DeviceDriverType.RRU9809 =>
-          deviceActors += (device → context.actorOf(Rfid9809ReaderActor.props(self, device),
+          deviceActors += (device -> context.actorOf(Rfid9809ReaderActor.props(self, device),
             name = device.name + "-rru9809-reader-actor"))
         case unknown =>
           logger.error(s"Unknown device type ${unknown.toString}")

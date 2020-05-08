@@ -31,7 +31,7 @@ class FormatsActor(settings: Settings) extends Actor {
 
   override def preStart() = {
     settings.terminalConfig.formats.foreach { (format: FormatConfig) =>
-      actors += format.driverType → (format.driverType match {
+      actors += format.driverType -> (format.driverType match {
         case FormatType.Plain => context.actorOf(PlainFormatActor.props(format))
       })
     }

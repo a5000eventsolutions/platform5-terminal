@@ -9,7 +9,7 @@ import sevts.terminal.Injector
 import sevts.terminal.actors.format._
 import sevts.server.domain.{FormField, Id}
 import sevts.server.remote.Message.ScannerMessage
-import collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.concurrent.Future
 
 

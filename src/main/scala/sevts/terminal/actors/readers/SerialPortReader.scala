@@ -47,7 +47,7 @@ class SerialPortReader(listener: ActorRef, device: DeviceConfig) extends Actor w
   var pendingPorts = Set.empty[String]
 
   override def preStart = {
-    initPorts(SerialPort.getCommPorts)
+    initPorts(SerialPort.getCommPorts.toIndexedSeq)
   }
 
   def initPorts(ports: Seq[SerialPort]) = {
@@ -97,12 +97,12 @@ class SerialPortReader(listener: ActorRef, device: DeviceConfig) extends Actor w
           logger.error(e.getMessage, e)
           logger.error(s"Serial port ${port.getSystemPortName} error!")
           logger.info("Try to reinit port")
-          initPorts(SerialPort.getCommPorts)
+          initPorts(SerialPort.getCommPorts.toIndexedSeq)
       }
 
 
     case Command.OpenPort(portName) =>
-      val ports = SerialPort.getCommPorts
+      val ports = SerialPort.getCommPorts.toIndexedSeq
       val result = ports find( port =>
         port.getSystemPortName == portName) map { port =>
           port.openPort()
@@ -111,7 +111,7 @@ class SerialPortReader(listener: ActorRef, device: DeviceConfig) extends Actor w
       sender() ! result
 
     case Command.ClosePort(portName) =>
-      val ports = SerialPort.getCommPorts
+      val ports = SerialPort.getCommPorts.toIndexedSeq
       val result = ports find( port =>
         port.getSystemPortName == portName) map { port =>
         port.closePort()
