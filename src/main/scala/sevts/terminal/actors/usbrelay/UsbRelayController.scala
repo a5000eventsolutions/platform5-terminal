@@ -8,6 +8,7 @@ import sevts.terminal.usbrelay.UsbRelayLibrary
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.control.NonFatal
 
 
 class UsbRelayController(injector: Injector) extends LazyLogging {
@@ -44,7 +45,7 @@ class UsbRelayController(injector: Injector) extends LazyLogging {
 
   }
 
-  def open(tag: String) = {
+  def open(tag: String) = this.synchronized {
     logger.info(s"Try open channel with tag: ${tag}")
 
     tag match {
@@ -58,7 +59,7 @@ class UsbRelayController(injector: Injector) extends LazyLogging {
     }
   }
 
-  private def openChannel(h: Int, index: Int) = {
+  private def openChannel(h: Int, index: Int) = try {
     val result = usbRelayLib.usb_relay_device_open_one_relay_channel(h, index)
     result match {
       case 0 =>
@@ -69,14 +70,24 @@ class UsbRelayController(injector: Injector) extends LazyLogging {
       case 1 => logger.error(s"Error open channel ${index}")
       case 2 => logger.error(s"Channel ${index} is outnumber the number of the usb relay device")
     }
+  } catch {
+    case NonFatal(e) =>
+      logger.error("Unknown error on open relay")
+      logger.error(e.getMessage, e)
   }
 
-  private def closeChannel(h: Int, index: Int) = {
-    val result = usbRelayLib.usb_relay_device_close_one_relay_channel(h, index)
-    result match {
-      case 0 => logger.info(s"Channel ${index} is closed")
-      case 1 => logger.error(s"Error close channel ${index}")
-      case 2 => logger.error(s"Close channel ${index} is outnumber the number of the usb relay device")
+  private def closeChannel(h: Int, index: Int) = this.synchronized {
+    try {
+      val result = usbRelayLib.usb_relay_device_close_one_relay_channel(h, index)
+      result match {
+        case 0 => logger.info(s"Channel ${index} is closed")
+        case 1 => logger.error(s"Error close channel ${index}")
+        case 2 => logger.error(s"Close channel ${index} is outnumber the number of the usb relay device")
+      }
+    } catch {
+      case NonFatal(e) =>
+        logger.error("Unknown error on close relay")
+        logger.error(e.getMessage, e)
     }
   }
 
