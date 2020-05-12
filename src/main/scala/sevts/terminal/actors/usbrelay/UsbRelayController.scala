@@ -13,11 +13,25 @@ import scala.util.control.NonFatal
 
 class UsbRelayController(injector: Injector) extends LazyLogging {
 
+  sealed trait OpenedChannel
+  case object EnterChannel extends OpenedChannel
+  case object ExitChannel extends OpenedChannel
+
   implicit val ec = injector.ec
   val settings = injector.settings.usbRelay
 
   var hHandle: Int = _
   var usbRelayLib: UsbRelayLibrary = _
+
+  var enterOpen: Boolean = false
+  var exitOpen: Boolean = false
+
+  private def setChannelState(channel: OpenedChannel, state: Boolean) = {
+    channel match {
+      case EnterChannel => enterOpen = state
+      case ExitChannel => exitOpen = state
+    }
+  }
 
   def start() = {
 
@@ -51,29 +65,44 @@ class UsbRelayController(injector: Injector) extends LazyLogging {
     tag match {
 
       case settings.directionEnterTag =>
-        openChannel(hHandle, settings.enterChannelNum)
+        if(!enterOpen) {
+          openChannel(hHandle, settings.enterChannelNum, EnterChannel)
+        } else {
+          logger.error("Enter channel already opened. Skip command")
+        }
+
 
       case settings.directionExitTag =>
-        openChannel(hHandle, settings.exitChannelNum)
-
+        if(!exitOpen) {
+          openChannel(hHandle, settings.exitChannelNum, ExitChannel)
+        } else {
+          logger.error("Enter channel already opened. Skip command")
+        }
     }
   }
 
-  private def openChannel(h: Int, index: Int) = try {
+  private def openChannel(h: Int, index: Int, channel: OpenedChannel) = try {
     val result = usbRelayLib.usb_relay_device_open_one_relay_channel(h, index)
     result match {
       case 0 =>
         logger.info(s"Channel ${index} is opened")
         injector.system.scheduler.scheduleOnce(1 second){
+          setChannelState(channel, false)
           closeChannel(h, index)
         }
-      case 1 => logger.error(s"Error open channel ${index}")
-      case 2 => logger.error(s"Channel ${index} is outnumber the number of the usb relay device")
+        setChannelState(channel, true)
+      case 1 =>
+        logger.error(s"Error open channel ${index}")
+        setChannelState(channel, false)
+      case 2 =>
+        logger.error(s"Channel ${index} is outnumber the number of the usb relay device")
+        setChannelState(channel, false)
     }
   } catch {
     case NonFatal(e) =>
       logger.error("Unknown error on open relay")
       logger.error(e.getMessage, e)
+      setChannelState(channel, false)
   }
 
   private def closeChannel(h: Int, index: Int) = this.synchronized {

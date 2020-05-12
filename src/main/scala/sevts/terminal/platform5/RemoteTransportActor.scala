@@ -42,7 +42,7 @@ object RemoteTransportActor {
 
   private object Data {
     case object EmptyData extends Data
-    case class Reconnect(wsClient: ActorRef) extends Data with ClientRef
+    case class Reconnect(wsClient: ActorRef, lastActivity: Long) extends Data with ClientRef
     case class ConnectionEstablished(wsClient: ActorRef, lastActivity: Long) extends Data with ClientRef
     //uid is unique id (access token) on the server
     case class Working(id: Id[Terminal], uid: String, wsClient: ActorRef, lastActivity: Long) extends Data with ClientRef
@@ -61,16 +61,18 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
   val settings = injector.settings
 
   def startHeartbeat() = {
-    context.system.scheduler.scheduleAtFixedRate(5 seconds,
+    context.system.scheduler.scheduleAtFixedRate(10 seconds,
       10 seconds,
       self,
       ActivityCheck
     )
+
   }
 
   def sendConnectRequest() = {
     this.stateData match {
       case d: ClientRef =>
+        logger.error("Force close ws client")
         d.wsClient ! PoisonPill
       case _ =>
         logger.error("Unknown websocket state")
@@ -94,7 +96,7 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
 
   when(State.Idle) {
     case _ =>
-      goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
+      goto(State.Connecting) using Data.Reconnect(sendConnectRequest(), System.currentTimeMillis())
   }
 
   when(State.Connecting) {
@@ -111,15 +113,17 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
 
     case Event(ReceiveTimeout, reconnect: Data.Reconnect) =>
       logger.error(s"ident receive timeout ${reconnect.wsClient}")
-      stay() using Data.Reconnect(sendConnectRequest())
+      stay() using Data.Reconnect(sendConnectRequest(), System.currentTimeMillis())
 
     case Event(Terminated(actor), _) =>
       logger.error("Terminated")
       stay()
 
     case Event(ActivityCheck, reconnect: Data.Reconnect) =>
-      logger.error(s"Connecting Inactive timeout! ${reconnect.wsClient} Trying reconnect..")
-      stay() using Data.Reconnect(sendConnectRequest())
+      if(System.currentTimeMillis() - reconnect.lastActivity > 10000) {
+        logger.error(s"Connecting Inactive timeout! ${reconnect.wsClient} Trying reconnect..")
+        stay() using Data.Reconnect(sendConnectRequest(), System.currentTimeMillis())
+      } else stay()
 
     case Event(ex: WSException, _) =>
       logger.info(s"Catch exception ${ex.e.getMessage}")
@@ -163,7 +167,7 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
     case Event(ActivityCheck, data: Data.ConnectionEstablished) =>
       if(System.currentTimeMillis() - data.lastActivity > 10000) {
         logger.error(s"Registering Inactive timeout ${data.wsClient}! Trying reconnect..")
-        goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
+        goto(State.Connecting) using Data.Reconnect(sendConnectRequest(), System.currentTimeMillis())
       } else {
         stay()
       }
@@ -194,7 +198,7 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
     case Event(ActivityCheck, Data.Working(_, uid, actor, lastActivity)) =>
       if(System.currentTimeMillis() - lastActivity > 10000) {
         logger.error(s"Working Inactive timeout! ${actor} Trying reconnect..")
-        goto(State.Connecting) using Data.Reconnect(sendConnectRequest())
+        goto(State.Connecting) using Data.Reconnect(sendConnectRequest(), System.currentTimeMillis())
       } else {
         stay()
       }
