@@ -4,13 +4,13 @@ import akka.actor.ActorSystem
 import akka.serialization.SerializationExtension
 import com.twitter.chill.{KryoInstantiator, KryoPool}
 import com.typesafe.scalalogging.LazyLogging
-import sevts.terminal.actors.format.FormatsActor
-import sevts.terminal.actors.readers.ReadersActor
-import sevts.terminal.actors.scanners.ScannersActor
-import sevts.terminal.actors.tripod.TripodControlActor
-import sevts.terminal.actors.usbrelay.UsbRelayControlActor
+import sevts.terminal.modules.format.FormatsActor
+import sevts.terminal.modules.readers.ReadersActor
+import sevts.terminal.modules.scanners.ScannersActor
+import sevts.terminal.modules.tripod.TripodControlActor
+import sevts.terminal.modules.usbrelay.UsbRelayControlActor
 import sevts.terminal.config.Settings
-import sevts.terminal.platform5.RemoteTransportActor
+import sevts.terminal.transport.RemoteTransportActor
 
 object Injector {
 

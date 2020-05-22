@@ -1,4 +1,4 @@
-package sevts.terminal.actors.readers
+package sevts.terminal.modules.readers
 
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.actor.Actor.Receive

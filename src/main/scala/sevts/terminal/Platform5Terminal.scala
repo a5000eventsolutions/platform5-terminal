@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import org.slf4j.LoggerFactory
 import sevts.terminal.config.Settings
 import sevts.terminal.networking.AppServer
-import sevts.terminal.platform5.BrowserRunner
+import sevts.terminal.service.BrowserRunner
 import sevts.terminal.tripod.TripodController
 
 object Platform5Terminal {

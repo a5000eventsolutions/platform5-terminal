@@ -1,4 +1,4 @@
-package sevts.terminal.actors.scanners
+package sevts.terminal.modules.scanners
 
 import akka.actor.{Actor, Props}
 import akka.pattern._
@@ -6,7 +6,7 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import scala.concurrent.duration._
 import sevts.terminal.Injector
-import sevts.terminal.actors.format._
+import sevts.terminal.modules.format._
 import sevts.server.domain.{FormField, Id}
 import sevts.server.remote.Message.ScannerMessage
 import scala.jdk.CollectionConverters._

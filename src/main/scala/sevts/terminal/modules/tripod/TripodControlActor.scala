@@ -1,4 +1,4 @@
-package sevts.terminal.actors.tripod
+package sevts.terminal.modules.tripod
 
 import akka.actor.{Actor, Props}
 import com.typesafe.scalalogging.LazyLogging

@@ -1,4 +1,4 @@
-package sevts.terminal.actors.usbrelay
+package sevts.terminal.modules.usbrelay
 
 import akka.actor.{Actor, Props}
 import com.typesafe.scalalogging.LazyLogging

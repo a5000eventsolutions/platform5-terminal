@@ -1,8 +1,7 @@
-package sevts.terminal.platform5
+package sevts.terminal.service
 
 import java.awt.print.{Book, PageFormat, Paper, PrinterJob}
 import java.io.ByteArrayInputStream
-
 import javax.print.{PrintService, PrintServiceLookup}
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
@@ -10,10 +9,8 @@ import org.apache.pdfbox.io.MemoryUsageSetting
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.printing.{PDFPrintable, Scaling}
 import sevts.remote.protocol.Protocol.{PrintError, RemotePrintFile}
-import sevts.server.documents.DocumentRecord
 import sevts.server.domain.{FailureType, FileMeta, ME}
 import sevts.terminal.Injector
-
 import scala.concurrent.duration._
 import scala.concurrent.Future
 import scala.language.postfixOps

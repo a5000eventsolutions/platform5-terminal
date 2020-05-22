@@ -1,4 +1,4 @@
-package sevts.terminal.actors.readers
+package sevts.terminal.modules.readers
 
 import java.io.IOException
 import java.util

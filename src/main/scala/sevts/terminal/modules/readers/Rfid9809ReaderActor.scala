@@ -1,4 +1,4 @@
-package sevts.terminal.actors.readers
+package sevts.terminal.modules.readers
 
 import java.nio.{Buffer, ByteBuffer, IntBuffer}
 import java.util.concurrent.TimeUnit
@@ -6,10 +6,10 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{Actor, ActorRef, Props}
 import com.rfid.rru9809.ComRfidRru9809Library
 import com.typesafe.scalalogging.LazyLogging
-import sevts.terminal.actors.readers.Rfid9809ReaderActor.Commands._
-import sevts.terminal.actors.readers.Rfid9809ReaderActor.Response.{WriteError, WriteOk}
-import sevts.terminal.actors.readers.SerialPortReader.Command.DataReceived
-import sevts.terminal.actors.scanners.ScannersActor.Request.EPCReceived
+import sevts.terminal.modules.readers.Rfid9809ReaderActor.Commands._
+import sevts.terminal.modules.readers.Rfid9809ReaderActor.Response.{WriteError, WriteOk}
+import sevts.terminal.modules.readers.SerialPortReader.Command.DataReceived
+import sevts.terminal.modules.scanners.ScannersActor.Request.EPCReceived
 import sevts.terminal.config.Settings.DeviceConfig
 
 import scala.annotation.tailrec

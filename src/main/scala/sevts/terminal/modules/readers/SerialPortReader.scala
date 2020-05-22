@@ -1,4 +1,4 @@
-package sevts.terminal.actors.readers
+package sevts.terminal.modules.readers
 
 import akka.actor.{Actor, ActorRef, Props}
 import com.fazecast.jSerialComm._

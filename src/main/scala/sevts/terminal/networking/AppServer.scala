@@ -5,7 +5,7 @@ import akka.actor._
 import com.typesafe.scalalogging.LazyLogging
 import sevts.terminal.Injector
 import sevts.terminal.config.Settings
-import sevts.terminal.platform5.BrowserRunner
+import sevts.terminal.service.BrowserRunner
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext

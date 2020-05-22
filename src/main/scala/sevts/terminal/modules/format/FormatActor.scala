@@ -1,6 +1,6 @@
-package sevts.terminal.actors.format
+package sevts.terminal.modules.format
 
-import sevts.terminal.actors.format.FormatsActor.Processed
+import sevts.terminal.modules.format.FormatsActor.Processed
 
 object FormatActor {
 

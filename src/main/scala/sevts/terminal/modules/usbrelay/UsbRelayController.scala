@@ -1,4 +1,4 @@
-package sevts.terminal.actors.usbrelay
+package sevts.terminal.modules.usbrelay
 
 import com.sun.jna.Native
 import com.typesafe.scalalogging.LazyLogging

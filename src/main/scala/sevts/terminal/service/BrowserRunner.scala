@@ -1,4 +1,4 @@
-package sevts.terminal.platform5
+package sevts.terminal.service
 
 import com.typesafe.scalalogging.LazyLogging
 import sevts.terminal.config.Settings

@@ -1,10 +1,10 @@
-package sevts.terminal.actors.format
+package sevts.terminal.modules.format
 
 import java.util.regex.Pattern
 
 import akka.actor.{Actor, Props}
 import com.typesafe.scalalogging.LazyLogging
-import sevts.terminal.actors.format.FormatsActor.Processed
+import sevts.terminal.modules.format.FormatsActor.Processed
 import sevts.terminal.config.Settings.FormatConfig
 
 object PlainFormatActor {

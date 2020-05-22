@@ -1,4 +1,4 @@
-package sevts.terminal.actors.format
+package sevts.terminal.modules.format
 
 import akka.actor.Actor.Receive
 import akka.actor.{Actor, ActorRef, Props}

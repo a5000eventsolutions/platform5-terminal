@@ -1,4 +1,4 @@
-package sevts.terminal.platform5
+package sevts.terminal.service
 
 import com.typesafe.scalalogging.LazyLogging
 import sevts.server.domain.{Id, Terminal}
@@ -7,8 +7,8 @@ import sevts.server.protocol.TerminalEvent.{AssignBarcodeValue, CheckBadgeAccess
 import sevts.server.remote.Message.ScannerMessage
 import sevts.server.remote.{Message, Reaction}
 import sevts.terminal.Injector
-import sevts.terminal.actors.readers.ReadersActor
-import sevts.terminal.actors.scanners.ScannersActor
+import sevts.terminal.modules.readers.ReadersActor
+import sevts.terminal.modules.scanners.ScannersActor
 import akka.pattern._
 import akka.util.Timeout
 
