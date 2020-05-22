@@ -12,9 +12,9 @@ import scala.util.Failure
 import scala.util.control.NonFatal
 
 
-class Storage[T <: AnyRef](collectionName: String,
-                           basePath: Path,
-                           serialization: Serialization) extends LazyLogging with AutoCloseable {
+class KVStorage[T <: AnyRef](collectionName: String,
+                             basePath: Path,
+                             serialization: Serialization) extends LazyLogging with AutoCloseable {
 
   private val path: Path = basePath.resolve(collectionName)
 
