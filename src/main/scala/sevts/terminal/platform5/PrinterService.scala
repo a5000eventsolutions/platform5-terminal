@@ -66,7 +66,10 @@ class PrinterService(injector: Injector) extends LazyLogging {
 
 
   private def doPrint(fileMeta: ME[FileMeta], data: Array[Byte], printerService: PrintService): Future[PrinterJob] = Future {
-    val document = PDDocument.load(new ByteArrayInputStream(data), MemoryUsageSetting.setupTempFileOnly())
+    
+    val fileStream = new ByteArrayInputStream(data)
+    val document = PDDocument.load(fileStream, MemoryUsageSetting.setupTempFileOnly())
+    fileStream.close()
 
     val printerJob: PrinterJob = PrinterJob.getPrinterJob
     printerJob.setPrintService(printerService)
