@@ -31,10 +31,8 @@ class BrowserRunner(settings: Settings) extends LazyLogging {
 
     Try {
       val url = s"http://${settings.serverHost}:${settings.serverPort}"
-      val loginParams = s"/#/autologin?login=${settings.autoLoginConfig.username}" +
-        s"&password=${settings.autoLoginConfig.password}" +
-        s"&terminal=${settings.autoLoginConfig.terminal}" +
-        s"&monitor=${cfg.name}"
+
+      val loginParams = buildLoginParams(cfg)
       val terminalUrl = s"""--app=$url$loginParams"""
 
       val screen = s" --window-position=${cfg.position},0"
@@ -49,6 +47,20 @@ class BrowserRunner(settings: Settings) extends LazyLogging {
       case NonFatal(e) =>
         logger.error("Unable to open Chrome browser")
         logger.error(e.getMessage, e)
+    }
+
+  }
+
+  private def buildLoginParams(cfg: BrowserMonitor): String = {
+    if(settings.autoLoginConfig.manuallyUserName) {
+      s"/#/withterminal?" +
+        s"terminal=${settings.autoLoginConfig.terminal}" +
+        s"&monitor=${cfg.name}"
+    } else {
+      s"/#/autologin?login=${settings.autoLoginConfig.username}" +
+        s"&password=${settings.autoLoginConfig.password}" +
+        s"&terminal=${settings.autoLoginConfig.terminal}" +
+        s"&monitor=${cfg.name}"
     }
 
   }

@@ -158,6 +158,7 @@ object Settings {
       def apply(config: Config): AutoLogin = {
         AutoLogin(
           enabled = config.getBoolean("enabled"),
+          manuallyUserName = config.getBoolean("manuallyUserName"),
           username =config.getString("username"),
           password = config.getString("password"),
           terminal = config.getString("terminal"),
@@ -180,6 +181,7 @@ object Settings {
                                position: String)
 
     case class AutoLogin(enabled: Boolean,
+                         manuallyUserName: Boolean,
                          username: String,
                          password: String,
                          terminal: String,
