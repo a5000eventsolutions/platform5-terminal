@@ -53,7 +53,7 @@ class BrowserRunner(settings: Settings) extends LazyLogging {
 
   private def buildLoginParams(cfg: BrowserMonitor): String = {
     if(settings.autoLoginConfig.manuallyUserName) {
-      s"/#/withterminal?" +
+      s"/#/autologin?" +
         s"terminal=${settings.autoLoginConfig.terminal}" +
         s"&monitor=${cfg.name}"
     } else {
