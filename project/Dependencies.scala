@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
 
-  object Versions {
+  object Versions { 
     val scala = "2.13.4"
     val platform5 = "1.0"
     val slf4j = "1.7.25"
