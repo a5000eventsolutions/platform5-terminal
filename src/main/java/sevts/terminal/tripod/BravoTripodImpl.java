@@ -26,7 +26,7 @@ public class BravoTripodImpl implements BravoTripod {
             this.serialPort = SerialPort.getCommPort(portIdentifier);
             serialPort.setBaudRate(9600);
             serialPort.setComPortParameters(9600, 8, 1, 2);
-            Boolean isOpen = serialPort.openPort();
+            boolean isOpen = serialPort.openPort();
             if(!isOpen) { throw new IOException("Cannot open Tripod serial port: " + portIdentifier); }
             this.driverTripod = new DriverTripod(new BufferedInputStream(this.serialPort.getInputStream()), this.serialPort.getOutputStream());
             this.openDoorTask = new OpenDoorTask(this.driverTripod);
