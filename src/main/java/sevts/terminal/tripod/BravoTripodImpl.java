@@ -1,13 +1,10 @@
 package sevts.terminal.tripod;
 
-import gnu.io.CommPortIdentifier;
-import gnu.io.NoSuchPortException;
-import gnu.io.PortInUseException;
-import gnu.io.SerialPort;
-import gnu.io.UnsupportedCommOperationException;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.fazecast.jSerialComm.SerialPort;
 import sevts.terminal.tripod.task.CheckStatusTask;
 import sevts.terminal.tripod.task.OpenDoorTask;
 import sevts.terminal.tripod.task.ResetTask;
@@ -26,28 +23,25 @@ public class BravoTripodImpl implements BravoTripod {
 
     public void connect(String portIdentifier) throws IOException {
         try {
-           // RXTXLoader.load();
-            CommPortIdentifier idf = CommPortIdentifier.getPortIdentifier(portIdentifier);
-            this.serialPort = (SerialPort)idf.open(TripodController.class.getCanonicalName(), 30000);
-            this.serialPort.setSerialPortParams(9600, 8, 1, 2);
+            this.serialPort = SerialPort.getCommPort(portIdentifier);
+            serialPort.setBaudRate(9600);
+            serialPort.setComPortParameters(9600, 8, 1, 2);
+            Boolean isOpen = serialPort.openPort();
+            if(!isOpen) { throw new IOException("Cannot open Tripod serial port: " + portIdentifier); }
             this.driverTripod = new DriverTripod(new BufferedInputStream(this.serialPort.getInputStream()), this.serialPort.getOutputStream());
             this.openDoorTask = new OpenDoorTask(this.driverTripod);
             this.resetTask = new ResetTask(this.driverTripod);
             this.checkStatusTask = new CheckStatusTask(this.driverTripod);
             this.isInit.set(true);
-        } catch (NoSuchPortException var3) {
-            throw new IOException("No such port exception, port = " + portIdentifier, var3);
-        } catch (UnsupportedCommOperationException var4) {
+        } catch (Exception var4) {
             throw new IOException(var4.getMessage(), var4);
-        } catch (PortInUseException var5) {
-            throw new IOException(var5.getMessage(), var5);
         }
     }
 
     public void disconnect() {
         if (this.serialPort != null) {
             this.isInit.set(false);
-            this.serialPort.close();
+            this.serialPort.closePort();
         }
 
     }
