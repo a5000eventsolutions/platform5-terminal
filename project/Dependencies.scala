@@ -13,7 +13,7 @@ object Dependencies {
     val scalaLogging = "3.5.0"
     val pdfbox = "2.0.16"
     val jna = "4.2.1"
-    val jSerialComm = "1.3.11"
+    val jSerialComm = "2.7.0"
     val jsch = "0.1.54"
     val jnaerator = "0.12"
     val scalatest = "3.0.8"
