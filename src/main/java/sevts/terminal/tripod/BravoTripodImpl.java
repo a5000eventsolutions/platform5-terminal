@@ -2,9 +2,12 @@ package sevts.terminal.tripod;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.fazecast.jSerialComm.SerialPort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sevts.terminal.tripod.task.CheckStatusTask;
 import sevts.terminal.tripod.task.OpenDoorTask;
 import sevts.terminal.tripod.task.ResetTask;
@@ -18,12 +21,15 @@ public class BravoTripodImpl implements BravoTripod {
     protected CheckStatusTask checkStatusTask;
     protected AtomicBoolean isInit = new AtomicBoolean(false);
 
+    private static Logger logger = LoggerFactory.getLogger(BravoTripodImpl.class.getName());
+
     public BravoTripodImpl() {
     }
 
     public void connect(String portIdentifier) throws IOException {
         try {
-            this.serialPort = SerialPort.getCommPort(portIdentifier);
+
+            this.serialPort = SerialPort.getCommPorts()[Integer.parseInt(portIdentifier)];//SerialPort.getCommPort(portIdentifier);
             serialPort.setBaudRate(9600);
             serialPort.setComPortParameters(9600, 8, 1, 2);
             boolean isOpen = serialPort.openPort();
