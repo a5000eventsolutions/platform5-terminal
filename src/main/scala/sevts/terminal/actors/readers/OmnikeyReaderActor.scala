@@ -1,12 +1,10 @@
 package sevts.terminal.actors.readers
 
 import java.io.IOException
-import java.util
 import java.util.concurrent.TimeUnit
 import javax.smartcardio._
 
 import akka.actor.{Actor, ActorRef, Props}
-import com.fazecast.jSerialComm._
 import com.typesafe.scalalogging.LazyLogging
 import sevts.terminal.config.Settings.DeviceConfig
 import scala.concurrent.blocking
@@ -19,7 +17,7 @@ object OmnikeyReaderActor {
 
   sealed trait Command
   object Command {
-    case class DataReceived(port: SerialPort) extends Command
+    //case class DataReceived(port: SerialPort) extends Command
     case class StartTerminalRead(terminal: CardTerminal) extends Command
     case class ReadCard(terminal: CardTerminal) extends Command
   }

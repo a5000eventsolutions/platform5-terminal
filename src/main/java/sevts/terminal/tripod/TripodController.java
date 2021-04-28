@@ -1,9 +1,11 @@
 package sevts.terminal.tripod;
 
+import com.fazecast.jSerialComm.SerialPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.PostConstruct;
@@ -44,6 +46,20 @@ public class TripodController {
     }
 
     public void start() throws IOException {
+
+
+        StringBuilder scanText = new StringBuilder();
+        scanText.append(" Scan tripod ports:\r\n");
+
+        SerialPort[] ar = SerialPort.getCommPorts();
+
+        for (int i = 0; i < ar.length; i++) {
+            scanText.append(" " + i + ". found: " + ar[i].getDescriptivePortName() + "\r\n");
+        }
+        scanText.append("=== Scan completed ===");
+        logger.info(scanText.toString());
+
+
         logger.info("Starting tripod device...");
         this.startTripod();
         logger.info("Tripod start success");
