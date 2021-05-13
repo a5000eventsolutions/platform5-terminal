@@ -1,7 +1,6 @@
 package sevts.terminal.actors.format
 
 import java.util.regex.Pattern
-
 import akka.actor.{Actor, Props}
 import com.typesafe.scalalogging.LazyLogging
 import sevts.terminal.actors.format.FormatsActor.Processed
@@ -22,16 +21,19 @@ class PlainFormatActor(config: FormatConfig) extends Actor with LazyLogging {
   }
 
   def process(value: String) = {
-    val result = if(config.parameters.hasPath("regexp")) {
-      val regexp = config.parameters.getString("regexp").r
-      value match {
-        case regexp(id) =>
-          logger.info(s"Regex found id: $id")
-          id
-        case _ =>
-          logger.info("Regex id not found")
-          value
-      }
+     val result = if(config.parameters.hasPath("regexp")) {
+     val regexp = config.parameters.getString("regexp")
+     val pattern = Pattern.compile(regexp)
+     val matcher = pattern.matcher(value)
+
+       if(matcher.find) {
+         val id = matcher.group(1)
+         logger.info(s"Regex found id: $id")
+         id
+       }  else {
+         logger.info("Regex id not found")
+         value
+       }
     } else value
     val renderedTemplate = renderTemplate(config.template, result)
     Response.Result(Processed.StringData(renderedTemplate))
