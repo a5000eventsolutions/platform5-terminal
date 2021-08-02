@@ -97,7 +97,9 @@ class PrinterService(injector: Injector) extends LazyLogging {
     // override the page format
     val book = new Book()
     // append all pages
-    book.append(new PDFPrintable(document, Scaling.ACTUAL_SIZE, false, injector.settings.printing.dpi), pageFormat, document.getNumberOfPages)
+    val printable = new PDFPrintable(document, Scaling.ACTUAL_SIZE, false, injector.settings.printing.dpi)
+    printable.setSubsamplingAllowed(true)
+    book.append(printable, pageFormat, document.getNumberOfPages)
     printerJob.setPageable(book)
     logger.info("Print job started..")
     printerJob.print()

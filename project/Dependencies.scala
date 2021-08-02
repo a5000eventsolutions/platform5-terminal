@@ -11,7 +11,7 @@ object Dependencies {
     val disruptor = "3.3.6"
     val barcode4j = "2.1"
     val scalaLogging = "3.9.3"
-    val pdfbox = "2.0.16"
+    val pdfbox = "2.0.24"
     val jna = "4.2.1"
     val jSerialComm = "2.7.0"
     val jsch = "0.1.54"
