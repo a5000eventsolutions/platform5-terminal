@@ -33,6 +33,7 @@ class PrinterService(injector: Injector) extends LazyLogging {
 
   def print(command: RemotePrintFile) = {
     (for {
+      _ <- Future.successful(logger.info("Resolve printer service"))
       deviceContextOpt <- resolvePrinterService(command.printer.id)
       if deviceContextOpt.nonEmpty
       result <- doPrint(command.fileMeta, command.file, deviceContextOpt.get)
@@ -66,7 +67,9 @@ class PrinterService(injector: Injector) extends LazyLogging {
 
 
   private def doPrint(fileMeta: ME[FileMeta], data: Array[Byte], printerService: PrintService): Future[PrinterJob] = Future {
-    
+
+    logger.info("Set paper params")
+
     val fileStream = new ByteArrayInputStream(data)
     val document = PDDocument.load(fileStream, MemoryUsageSetting.setupTempFileOnly())
     fileStream.close()
@@ -96,6 +99,7 @@ class PrinterService(injector: Injector) extends LazyLogging {
     // append all pages
     book.append(new PDFPrintable(document, Scaling.ACTUAL_SIZE, false, injector.settings.printing.dpi), pageFormat, document.getNumberOfPages)
     printerJob.setPageable(book)
+    logger.info("Print job started..")
     printerJob.print()
     document.close()
     logger.info("File printing job complete")
