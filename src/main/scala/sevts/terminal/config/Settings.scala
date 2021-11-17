@@ -210,6 +210,8 @@ object Settings {
         case "STRETCH_TO_FIT" => Scaling.STRETCH_TO_FIT
         case "SCALE_TO_FIT"   => Scaling.SCALE_TO_FIT
       }
+
+      val swapSides = config.getBoolean("swapSides")
     }
 
     case class Devices(config: Config) {

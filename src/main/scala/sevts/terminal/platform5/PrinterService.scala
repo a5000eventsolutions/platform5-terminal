@@ -75,17 +75,7 @@ class PrinterService(injector: Injector) extends LazyLogging {
     printerJob.setPrintService(printerService)
     printerJob.setJobName(s"${fileMeta.entity.originalName}-${scala.util.Random.nextInt(10000)}")
 
-    val paper = new Paper()
-    val mediaBox = document.getPage(0).getMediaBox
-    paper.setSize(mediaBox.getWidth, mediaBox.getHeight)
-    //paper.setSize(settings.printer.pageWidth, settings.printer.pageHeight)
-    paper.setImageableArea(
-      document.getPage(0).getBBox.getLowerLeftX,
-      document.getPage(0).getBBox.getLowerLeftY,
-      document.getPage(0).getBBox.getWidth,
-      document.getPage(0).getBBox.getHeight
-    )
-
+   val paper = setPaper(document, settings.printing.page.swapSides)
     // custom page format
     val pageFormat = new PageFormat()
     pageFormat.setOrientation(settings.printing.page.orientation)
@@ -101,5 +91,28 @@ class PrinterService(injector: Injector) extends LazyLogging {
     document.close()
     logger.info("File printing job complete")
     printerJob
+  }
+
+  private def setPaper(document: PDDocument, swapSides: Boolean): Paper = {
+    val paper = new Paper()
+    val mediaBox = document.getPage(0).getMediaBox
+    if(swapSides) {
+      paper.setSize(mediaBox.getHeight, mediaBox.getWidth)
+      paper.setImageableArea(
+        document.getPage(0).getBBox.getLowerLeftY,
+        document.getPage(0).getBBox.getLowerLeftX,
+        document.getPage(0).getBBox.getHeight,
+        document.getPage(0).getBBox.getWidth
+      )
+    } else {
+      paper.setSize(mediaBox.getWidth, mediaBox.getHeight)
+      paper.setImageableArea(
+        document.getPage(0).getBBox.getLowerLeftX,
+        document.getPage(0).getBBox.getLowerLeftY,
+        document.getPage(0).getBBox.getWidth,
+        document.getPage(0).getBBox.getHeight
+      )
+    }
+    paper
   }
 }
