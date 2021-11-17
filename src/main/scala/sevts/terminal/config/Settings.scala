@@ -3,9 +3,9 @@ package sevts.terminal.config
 import java.awt.print.PageFormat
 import java.util.Map.Entry
 import java.util.concurrent.TimeUnit
-
 import com.typesafe.config._
 import com.typesafe.scalalogging.LazyLogging
+import org.apache.pdfbox.printing.Scaling
 import sevts.server.domain.{Id, Organisation}
 import sevts.server.remote.Reaction
 import sevts.terminal.config.Settings._
@@ -202,6 +202,14 @@ object Settings {
     case class PageConfig(config: Config) {
       private val cfgOrientation = config.getString("orientation")
       val orientation = if(cfgOrientation == "portrait") PageFormat.PORTRAIT else PageFormat.LANDSCAPE
+
+      private val cfgScaling = config.getString("scaling")
+      val scaling = cfgScaling match {
+        case "ACTUAL_SIZE"    => Scaling.ACTUAL_SIZE
+        case "SHRINK_TO_FIT"  => Scaling.SHRINK_TO_FIT
+        case "STRETCH_TO_FIT" => Scaling.STRETCH_TO_FIT
+        case "SCALE_TO_FIT"   => Scaling.SCALE_TO_FIT
+      }
     }
 
     case class Devices(config: Config) {
