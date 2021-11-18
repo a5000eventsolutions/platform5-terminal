@@ -194,16 +194,16 @@ object Settings {
       PrinterConfig(
         enabled = config.getBoolean("enabled"),
         dpi = config.getInt("dpi"),
-        page = PageConfig(config.getConfig("page")),
-        devices = Devices(config.getConfig("devices"))
+       // page = PageConfig(config.getConfig("page")),
+        devices = Devices(config)
       )
     }
 
     case class PageConfig(config: Config) {
-      private val cfgOrientation = config.getString("orientation")
+      private val cfgOrientation = config.getString("page.orientation")
       val orientation = if(cfgOrientation == "portrait") PageFormat.PORTRAIT else PageFormat.LANDSCAPE
 
-      private val cfgScaling = config.getString("scaling")
+      private val cfgScaling = config.getString("page.scaling")
       val scaling = cfgScaling match {
         case "ACTUAL_SIZE"    => Scaling.ACTUAL_SIZE
         case "SHRINK_TO_FIT"  => Scaling.SHRINK_TO_FIT
@@ -211,15 +211,16 @@ object Settings {
         case "SCALE_TO_FIT"   => Scaling.SCALE_TO_FIT
       }
 
-      val swapSides = config.getBoolean("swapSides")
+      val swapSides = config.getBoolean("page.swapSides")
+      val name = config.getString("name")
     }
 
     case class Devices(config: Config) {
-      val list = config.entrySet().asScala.map { (entry: Entry[String, ConfigValue]) =>
-        entry.getKey -> entry.getValue.unwrapped().asInstanceOf[String]
+      val list = config.getObjectList("devices").asScala.map { device: ConfigObject =>
+        device.toConfig.getInt("index").toString -> PageConfig(device.toConfig)
       }.toMap
     }
-    case class PrinterConfig(enabled: Boolean, dpi: Int, page: PageConfig, devices: Devices)
+    case class PrinterConfig(enabled: Boolean, dpi: Int, devices: Devices)
   }
 
   object TripodConfig {

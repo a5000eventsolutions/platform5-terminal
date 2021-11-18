@@ -2,7 +2,6 @@ package sevts.terminal.platform5
 
 import java.awt.print.{Book, PageFormat, Paper, PrinterJob}
 import java.io.ByteArrayInputStream
-
 import javax.print.{PrintService, PrintServiceLookup}
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
@@ -13,6 +12,7 @@ import sevts.remote.protocol.Protocol.{PrintError, RemotePrintFile}
 import sevts.server.documents.DocumentRecord
 import sevts.server.domain.{FailureType, FileMeta, ME}
 import sevts.terminal.Injector
+import sevts.terminal.config.Settings.PrinterConfig.PageConfig
 
 import scala.concurrent.duration._
 import scala.concurrent.Future
@@ -33,9 +33,9 @@ class PrinterService(injector: Injector) extends LazyLogging {
 
   def print(command: RemotePrintFile) = {
     (for {
-      deviceContextOpt <- resolvePrinterService(command.printer.id)
+      (deviceContextOpt, pageConfig) <- resolvePrinterService(command.printer.id)
       if deviceContextOpt.nonEmpty
-      result <- doPrint(command.fileMeta, command.file, deviceContextOpt.get)
+      result <- doPrint(command.fileMeta, command.file, deviceContextOpt.get, pageConfig)
     } yield {
       logger.info(s"Print task completed ${result.getJobName}")
       sevts.remote.protocol.Protocol.Enqueued(command.id, result.getJobName)
@@ -59,13 +59,18 @@ class PrinterService(injector: Injector) extends LazyLogging {
 
   }
 
-  private def resolvePrinterService(printerId: String): Future[Option[PrintService]] = Future {
-    val printerName = settings.printing.devices.list.getOrElse(printerId, throw FailureType.RecordNotFound)
-    PrinterJob.lookupPrintServices().find( _.getName == printerName)
+  private def resolvePrinterService(printerId: String): Future[(Option[PrintService], PageConfig)] = Future {
+    val pageConfig = settings.printing.devices.list.getOrElse(printerId, throw FailureType.RecordNotFound)
+    val printerName = pageConfig.name
+    (PrinterJob.lookupPrintServices().find( _.getName == printerName), pageConfig)
   }
 
 
-  private def doPrint(fileMeta: ME[FileMeta], data: Array[Byte], printerService: PrintService): Future[PrinterJob] = Future {
+  private def doPrint(fileMeta: ME[FileMeta],
+                      data: Array[Byte],
+                      printerService: PrintService,
+                      pageConfig: PageConfig
+                     ): Future[PrinterJob] = Future {
 
     val fileStream = new ByteArrayInputStream(data)
     val document = PDDocument.load(fileStream, MemoryUsageSetting.setupTempFileOnly())
@@ -75,16 +80,16 @@ class PrinterService(injector: Injector) extends LazyLogging {
     printerJob.setPrintService(printerService)
     printerJob.setJobName(s"${fileMeta.entity.originalName}-${scala.util.Random.nextInt(10000)}")
 
-   val paper = setPaper(document, settings.printing.page.swapSides)
+   val paper = setPaper(document, pageConfig.swapSides)
     // custom page format
     val pageFormat = new PageFormat()
-    pageFormat.setOrientation(settings.printing.page.orientation)
+    pageFormat.setOrientation(pageConfig.orientation)
     pageFormat.setPaper(paper)
 
     // override the page format
     val book = new Book()
     // append all pages
-    val printable = new PDFPrintable(document, settings.printing.page.scaling, false, injector.settings.printing.dpi)
+    val printable = new PDFPrintable(document, pageConfig.scaling, false, injector.settings.printing.dpi)
     book.append(printable, pageFormat, document.getNumberOfPages)
     printerJob.setPageable(book)
     printerJob.print()
