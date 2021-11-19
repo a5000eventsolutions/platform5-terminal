@@ -3,13 +3,14 @@ package sevts.terminal.actors.readers
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import javax.smartcardio._
-
 import akka.actor.{Actor, ActorRef, Props}
 import com.typesafe.scalalogging.LazyLogging
 import sevts.terminal.config.Settings.DeviceConfig
+
 import scala.concurrent.blocking
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.Try
 import scala.util.control.NonFatal
 
 object OmnikeyReaderActor {
@@ -20,6 +21,7 @@ object OmnikeyReaderActor {
     //case class DataReceived(port: SerialPort) extends Command
     case class StartTerminalRead(terminal: CardTerminal) extends Command
     case class ReadCard(terminal: CardTerminal) extends Command
+    case object ReconnectCard extends Command
   }
 
   case class SerialDataReceived(portName: String, deviceName: String, data: String)
@@ -56,21 +58,29 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor
 
   def receive = {
 
+    case Command.ReconnectCard =>
+      logger.info(s"Reconnect omnikey reader `${portName}`")
+      Try(connect()).recover {
+        case error =>
+          logger.info("Reconnect failed. Try next within 2 seconds.")
+          context.system.scheduler.scheduleOnce(2 second, self, Command.ReconnectCard)
+      }
+
     case Command.StartTerminalRead(terminal: CardTerminal) =>
       context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
 
     case Command.ReadCard(terminal) =>
-      tryReadCard(terminal) foreach { result =>
+      tryReadCard(terminal).foreach { result =>
         logger.info(s"Read value: $result")
         listener ! ReadersActor.DeviceEvent.DataReceived(device.name, result)
+        context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
       }
-      context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
 
     case msg =>
       logger.error("Unknown message received ${msg.toString}")
   }
 
-  def connect() = {
+  private def connect() = {
     import scala.jdk.CollectionConverters._
     var selectedTerminal: CardTerminal = null
     try {
@@ -118,9 +128,11 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor
     catch {
       case e: CardException =>
         logger.error(e.getMessage, e)
+        self ! Command.ReconnectCard
         None
       case e: Throwable if NonFatal(e) =>
         logger.error(e.getMessage, e)
+        self ! Command.ReconnectCard
         None
     }
   }
