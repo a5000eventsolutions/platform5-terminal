@@ -15,6 +15,7 @@ object Platform5Terminal {
   def main( args: Array[String] ): Unit = {
     val test = LoggerFactory.getLogger(classOf[TripodController].getName)
     test.info("Init")
-    val serverBinding = AppServer(config)
+    val runModeConfig = RunModeConfig.handleArgs(config, args)
+    val serverBinding = AppServer(runModeConfig)
   }
 }
