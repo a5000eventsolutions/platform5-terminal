@@ -2,6 +2,7 @@
 *.log
 *.iml
 *.npmignore
+*.DS_Store
 .idea/
 
 # Akka specific

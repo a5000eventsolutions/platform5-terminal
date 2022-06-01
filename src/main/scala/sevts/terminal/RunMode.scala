@@ -17,7 +17,8 @@ object RunModeConfig {
       val cfg = ConfigFactory.parseString(configOverride)
         .withFallback(ConfigFactory.load())
       new Settings(cfg)
+    } else {
+      settings
     }
-    settings
   }
 }
