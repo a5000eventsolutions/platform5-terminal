@@ -17,15 +17,20 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object ScannersService extends LazyLogging {
 
-  def dataReceived(injector: Injector, terminalId: Id[Terminal], data: ReadersActor.DeviceEvent.DataReceived)
+  def dataReceived(injector: Injector,
+                   terminalId: Id[Terminal],
+                   data: ReadersActor.DeviceEvent.DataReceived)
                   (implicit ec: ExecutionContext, timeout: Timeout): Future[Seq[TerminalEvent]] = {
     injector.scannersActor ? ScannersActor.Request.DataReceived(data.deviceName, data.data) map {
       case ScannersActor.Response.DataProcessed(msg) =>
-        convertEvent(terminalId, msg)
+        val extId = injector.settings.autoLoginConfig.externalId
+        convertEvent(terminalId, extId, msg)
     }
   }
 
-  private def convertEvent(terminalId: Id[Terminal], event: Message): Seq[TerminalEvent] = {
+  private def convertEvent(terminalId: Id[Terminal],
+                           externalId: Option[String],
+                           event: Message): Seq[TerminalEvent] = {
     event match {
       case ScannerMessage(reaction, _, value, _, badgeSearch, formList, tag) =>
         logger.info("Terminal push message")
@@ -35,7 +40,7 @@ object ScannersService extends LazyLogging {
             Seq(OpenFormData(terminalId, value, badgeSearch.getOrElse(false), formList))
           case Reaction.CheckAccess =>
             logger.info(s"Check badge access $value")
-            Seq(CheckBadgeAccess(terminalId, value, tag))
+            Seq(CheckBadgeAccess(terminalId, externalId, value, tag))
           case Reaction.AssignBarcodeValue =>
             logger.info(s"Assign barcode value: `$value`")
             Seq(AssignBarcodeValue(terminalId, value))

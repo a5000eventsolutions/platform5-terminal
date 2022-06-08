@@ -162,7 +162,8 @@ object Settings {
           username =config.getString("username"),
           password = config.getString("password"),
           terminal = config.getString("terminal"),
-          monitors = config.getConfigList("monitors").asScala.toSeq.take(5).map(BrowserMonitor(_))
+          monitors = config.getConfigList("monitors").asScala.toSeq.take(5).map(BrowserMonitor(_)),
+          externalId = Option(config.getString("externalId"))
         )
       }
     }
@@ -185,7 +186,9 @@ object Settings {
                          username: String,
                          password: String,
                          terminal: String,
-                         monitors: Seq[BrowserMonitor])
+                         monitors: Seq[BrowserMonitor],
+                         externalId: Option[String]
+                        )
   }
 
   object PrinterConfig {
