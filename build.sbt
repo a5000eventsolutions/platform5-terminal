@@ -35,13 +35,13 @@ lazy val terminal = (project in file("./"))
   .settings(
     scriptClasspath := Seq("*"),
     bashScriptConfigLocation := Some("${app_home}/../PLATFORM5_TERMINAL_config.txt"),
-    mainClass in Compile := Some("sevts.terminal.Platform5Terminal"),
+    Compile / mainClass := Some("sevts.terminal.Platform5Terminal"),
     topLevelDirectory := Some("platform5-terminal")
   )
   .enablePlugins(JavaAppPackaging)
   .settings(
-    mappings in Universal += {
-      ((resourceDirectory in Compile).value / "application.conf") -> "conf/application.conf"
+    Universal / mappings += {
+      ((Compile / resourceDirectory).value / "application.conf") -> "conf/application.conf"
     }
   )
   .settings( commonSettings: _* )
