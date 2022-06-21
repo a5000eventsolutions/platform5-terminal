@@ -1,6 +1,7 @@
 package sevts.terminal.actors.usbrelay
 
 import com.sun.jna.Native
+import com.sun.jna.win32.W32APIOptions
 import com.typesafe.scalalogging.LazyLogging
 import sevts.terminal.Injector
 import sevts.terminal.usbrelay
@@ -40,7 +41,7 @@ class UsbRelayController(injector: Injector) extends LazyLogging {
 
     System.setProperty("jna.library.path", injector.settings.usbRelay.dllPath)
 
-    usbRelayLib = Native.load("usb_relay_device.dll", classOf[usbrelay.UsbRelayLibrary])
+    usbRelayLib = Native.load("usb_relay_device.dll", classOf[usbrelay.UsbRelayLibrary], W32APIOptions.ASCII_OPTIONS)
 
     val initResult = usbRelayLib.usb_relay_init()
 
