@@ -56,6 +56,7 @@ class UsbRelayController(injector: Injector) extends LazyLogging {
       logger.error(s"Error opening device. Shutting down")
       System.exit(-1)
     }
+    logger.info(s"USBRelay handler value: `${hHandle}`")
 
   }
 
