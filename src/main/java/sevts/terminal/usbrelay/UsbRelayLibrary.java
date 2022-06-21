@@ -3,6 +3,7 @@ package sevts.terminal.usbrelay;
 import com.sun.jna.Library;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.win32.StdCallLibrary;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -13,7 +14,7 @@ import java.nio.IntBuffer;
  * a tool written by <a href="http://ochafik.free.fr/">Olivier Chafik</a> that <a href="http://code.google.com/p/jnaerator/wiki/CreditsAndLicense">uses a few opensource projects.</a>.<br>
  * For help, please visit <a href="http://nativelibs4java.googlecode.com/">NativeLibs4Java</a> , <a href="http://rococoa.dev.java.net/">Rococoa</a>, or <a href="http://jna.dev.java.net/">JNA</a>.
  */
-public interface UsbRelayLibrary extends Library {
+public interface UsbRelayLibrary extends StdCallLibrary {
 //	public static final String JNA_LIBRARY_NAME = LibraryExtractor.getLibraryPath("UsbRelay", true, usbrelay.UsbRelayLibrary.class);
 //	public static final NativeLibrary JNA_NATIVE_LIB = NativeLibrary.getInstance(JNA_LIBRARY_NAME, com.ochafik.lang.jnaerator.runtime.MangledFunctionMapper.DEFAULT_OPTIONS);
 //	public static final UsbRelayLibrary INSTANCE = (UsbRelayLibrary)Native.loadLibrary(JNA_LIBRARY_NAME, usbrelay.UsbRelayLibrary.class, com.ochafik.lang.jnaerator.runtime.MangledFunctionMapper.DEFAULT_OPTIONS);
