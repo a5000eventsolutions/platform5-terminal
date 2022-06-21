@@ -41,7 +41,7 @@ class UsbRelayController(injector: Injector) extends LazyLogging {
 
     System.setProperty("jna.library.path", injector.settings.usbRelay.dllPath)
 
-    usbRelayLib = Native.load("usb_relay_device.dll", classOf[usbrelay.UsbRelayLibrary], W32APIOptions.UNICODE_OPTIONS)
+    usbRelayLib = Native.load("usb_relay_device.dll", classOf[usbrelay.UsbRelayLibrary])
 
     val initResult = usbRelayLib.usb_relay_init()
 
