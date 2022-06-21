@@ -52,7 +52,7 @@ object Dependencies {
     //rfid9809 scanner jna api
     "com.nativelibs4java" % "jnaerator-runtime" % Versions.jnaerator,
 
-    "net.java.dev.jna" % "jna" % "5.5.0",
+    "net.java.dev.jna" % "jna" % "5.11.0",
     "com.nativelibs4java" % "jnaerator" % "0.12"
   ))
 }
