@@ -3,7 +3,6 @@ package sevts.terminal.usbrelay;
 import com.sun.jna.Library;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.win32.StdCallLibrary;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -14,7 +13,7 @@ import java.nio.IntBuffer;
  * a tool written by <a href="http://ochafik.free.fr/">Olivier Chafik</a> that <a href="http://code.google.com/p/jnaerator/wiki/CreditsAndLicense">uses a few opensource projects.</a>.<br>
  * For help, please visit <a href="http://nativelibs4java.googlecode.com/">NativeLibs4Java</a> , <a href="http://rococoa.dev.java.net/">Rococoa</a>, or <a href="http://jna.dev.java.net/">JNA</a>.
  */
-public interface UsbRelayLibrary extends StdCallLibrary {
+public interface UsbRelayLibrary extends Library {
 //	public static final String JNA_LIBRARY_NAME = LibraryExtractor.getLibraryPath("UsbRelay", true, usbrelay.UsbRelayLibrary.class);
 //	public static final NativeLibrary JNA_NATIVE_LIB = NativeLibrary.getInstance(JNA_LIBRARY_NAME, com.ochafik.lang.jnaerator.runtime.MangledFunctionMapper.DEFAULT_OPTIONS);
 //	public static final UsbRelayLibrary INSTANCE = (UsbRelayLibrary)Native.loadLibrary(JNA_LIBRARY_NAME, usbrelay.UsbRelayLibrary.class, com.ochafik.lang.jnaerator.runtime.MangledFunctionMapper.DEFAULT_OPTIONS);
@@ -74,7 +73,7 @@ public interface UsbRelayLibrary extends StdCallLibrary {
 	 * Original signature : <code>int usb_relay_device_open_with_serial_number(const char*, unsigned)</code><br>
 	 * <i>native declaration : usb_relay_device.h:59</i>
 	 */
-	int usb_relay_device_open_with_serial_number(String serial_number, int len);
+	Long usb_relay_device_open_with_serial_number(String serial_number, int len);
 	/**
 	 * open a usb relay device<br>
 	 * @return: This funcation returns a valid handle to the device on success or NULL on failure.<br>
@@ -96,7 +95,7 @@ public interface UsbRelayLibrary extends StdCallLibrary {
 	 * Original signature : <code>int usb_relay_device_open_one_relay_channel(int, int)</code><br>
 	 * <i>native declaration : usb_relay_device.h:74</i>
 	 */
-	int usb_relay_device_open_one_relay_channel(int hHandle, int index);
+	int usb_relay_device_open_one_relay_channel(Long hHandle, int index);
 	/**
 	 * open all relay channel on the USB-Relay-Device<br>
 	 * @paramter: hHandle -- which usb relay device your want to operate<br>
@@ -104,7 +103,7 @@ public interface UsbRelayLibrary extends StdCallLibrary {
 	 * Original signature : <code>int usb_relay_device_open_all_relay_channel(int)</code><br>
 	 * <i>native declaration : usb_relay_device.h:80</i>
 	 */
-	int usb_relay_device_open_all_relay_channel(int hHandle);
+	int usb_relay_device_open_all_relay_channel(Long hHandle);
 	/**
 	 * close a relay channel on the USB-Relay-Device<br>
 	 * @paramter: index -- which channel your want to close<br>
@@ -113,7 +112,7 @@ public interface UsbRelayLibrary extends StdCallLibrary {
 	 * Original signature : <code>int usb_relay_device_close_one_relay_channel(int, int)</code><br>
 	 * <i>native declaration : usb_relay_device.h:87</i>
 	 */
-	int usb_relay_device_close_one_relay_channel(int hHandle, int index);
+	int usb_relay_device_close_one_relay_channel(Long hHandle, int index);
 	/**
 	 * close all relay channel on the USB-Relay-Device<br>
 	 * @paramter: hHandle -- which usb relay device your want to operate<br>

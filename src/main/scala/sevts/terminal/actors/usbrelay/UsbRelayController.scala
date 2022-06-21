@@ -21,7 +21,7 @@ class UsbRelayController(injector: Injector) extends LazyLogging {
   implicit val ec = injector.ec
   val settings = injector.settings.usbRelay
 
-  var hHandle: Int = _
+  var hHandle: Long = _
   var usbRelayLib: UsbRelayLibrary = _
 
   var enterOpen: Boolean = false
@@ -83,7 +83,7 @@ class UsbRelayController(injector: Injector) extends LazyLogging {
     }
   }
 
-  private def openChannel(h: Int, index: Int, channel: OpenedChannel) = try {
+  private def openChannel(h: Long, index: Int, channel: OpenedChannel) = try {
     val result = usbRelayLib.usb_relay_device_open_one_relay_channel(h, index)
     result match {
       case 0 =>
@@ -107,7 +107,7 @@ class UsbRelayController(injector: Injector) extends LazyLogging {
       setChannelState(channel, false)
   }
 
-  private def closeChannel(h: Int, index: Int) = this.synchronized {
+  private def closeChannel(h: Long, index: Int) = this.synchronized {
     try {
       val result = usbRelayLib.usb_relay_device_close_one_relay_channel(h, index)
       result match {
