@@ -12,6 +12,7 @@ import sevts.terminal.config.Settings._
 
 import scala.concurrent.duration.{Duration, TimeUnit}
 import scala.jdk.CollectionConverters._
+import scala.util.Try
 
 object Settings {
 
@@ -327,4 +328,7 @@ class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
   val tripod = TripodConfig(config.getConfig("platform5.terminal.config.tripod"))
 
   val usbRelay = UsbRelayConfig(config.getConfig("platform5.terminal.config.usbRelay"))
+
+  val testAuthEnabled = Try(config.getBoolean("platform5.testAuthEnabled")).getOrElse(false)
+
 }

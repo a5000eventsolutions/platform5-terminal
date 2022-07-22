@@ -47,6 +47,28 @@ object RemoteTransportActor {
     //uid is unique id (access token) on the server
     case class Working(id: Id[Terminal], uid: String, wsClient: ActorRef, lastActivity: Long) extends Data with ClientRef
   }
+
+  private object ExitCode {
+    // Connecting
+    val RemoteAccessServedIdentified = 1
+    // Registering
+    val TerminalRegistered = 2
+    val RegConnEstablished = 3
+
+    // Connecting
+    val CatchException = 101
+    val IdentReceiveTimeout = 102
+    val ConnectingTerminated = 103
+    val ConnectionTimeout = 104
+    val ConnectionFailed = 105
+
+    // Registering
+    val WTF = 111
+    val AccessDenied = 112
+    val TerminalRegisterError = 113
+    val RegisteringInactiveTimeout = 114
+    val RegisteringTerminated = 115
+  }
 }
 
 class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with LazyLogging {
@@ -103,36 +125,43 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
 
     case Event(WsClient.Connected, reconnect: Data.Reconnect) =>
       logger.info("Remote access served identified")
+      //testAuthEnabled(ExitCode.RemoteAccessServedIdentified) // not used yet
       context.watch(reconnect.wsClient)
       self ! Warmup
       goto(State.Registering) using Data.ConnectionEstablished(reconnect.wsClient, System.currentTimeMillis())
 
     case Event(WsClient.Disconnected, reconnect: Data.Reconnect) =>
       logger.error(s"Connection failed")
+      testAuthEnabled(ExitCode.ConnectionFailed)
       stay()
 
     case Event(ReceiveTimeout, reconnect: Data.Reconnect) =>
       logger.error(s"ident receive timeout ${reconnect.wsClient}")
+      testAuthEnabled(ExitCode.IdentReceiveTimeout)
       stay() using Data.Reconnect(sendConnectRequest(), System.currentTimeMillis())
 
     case Event(Terminated(actor), _) =>
       logger.error("Terminated")
+      testAuthEnabled(ExitCode.ConnectingTerminated)
       stay()
 
     case Event(ActivityCheck, reconnect: Data.Reconnect) =>
       if(System.currentTimeMillis() - reconnect.lastActivity > 10000) {
         logger.error(s"Connecting Inactive timeout! ${reconnect.wsClient} Trying reconnect..")
+        testAuthEnabled(ExitCode.ConnectionTimeout)
         stay() using Data.Reconnect(sendConnectRequest(), System.currentTimeMillis())
       } else stay()
 
     case Event(ex: WSException, _) =>
       logger.info(s"Catch exception ${ex.e.getMessage}")
+      testAuthEnabled(ExitCode.CatchException)
       stay()
   }
 
   when(State.Registering) {
     case Event(WsClient.Connected, _) =>
       logger.error("WTF?")
+      testAuthEnabled(ExitCode.WTF)
       context.setReceiveTimeout(Duration.Undefined)
       self ! Warmup
       stay()
@@ -147,26 +176,31 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
 
     case Event(TerminalRegistered(id, uid), Data.ConnectionEstablished(a, l)) =>
       logger.info(s"Terminal registered on access control server as id `${id.value}`")
+      testAuthEnabled(ExitCode.TerminalRegistered)
       goto(State.Working) using Data.Working(id, uid, a, l)
 
     case Event(AccessDenied, _) =>
       logger.error(s"Access denied for terminal with name `${settings.autoLoginConfig.terminal}`")
       logger.error("Stopping terminal process..")
+      testAuthEnabled(ExitCode.AccessDenied)
       context.system.terminate()
       stop()
 
     case Event(RegisterError, _) =>
       logger.error("Terminal register error on access control server")
+      testAuthEnabled(ExitCode.TerminalRegisterError)
       stay()
 
     case Event(Ping, data: Data.ConnectionEstablished) =>
       logger.error("reg conn established")
+      testAuthEnabled(ExitCode.RegConnEstablished)
       data.wsClient ! Pong
       stay() using data.copy(lastActivity = System.currentTimeMillis())
 
     case Event(ActivityCheck, data: Data.ConnectionEstablished) =>
       if(System.currentTimeMillis() - data.lastActivity > 10000) {
         logger.error(s"Registering Inactive timeout ${data.wsClient}! Trying reconnect..")
+        testAuthEnabled(ExitCode.RegisteringInactiveTimeout)
         goto(State.Connecting) using Data.Reconnect(sendConnectRequest(), System.currentTimeMillis())
       } else {
         stay()
@@ -174,6 +208,7 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
 
     case Event(Terminated(actor), _) =>
       logger.error(s"Terminated ${actor}. Registering reconnect")
+      testAuthEnabled(ExitCode.RegisteringTerminated)
       stay()
   }
 
@@ -223,6 +258,12 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
     case unknown =>
       logger.info(s"Unknown message ${unknown.toString}")
       stay()
+  }
+
+  def testAuthEnabled(exitCode: Int) = {
+    if (injector.settings.testAuthEnabled) {
+      sys.exit(exitCode)
+    }
   }
 
 
