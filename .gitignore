@@ -43,3 +43,4 @@ chromeMonitor1/
 project/project/
 chrome1/
 
+!/.bsp/sbt.json
