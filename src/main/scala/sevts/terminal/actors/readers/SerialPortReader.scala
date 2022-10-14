@@ -37,7 +37,13 @@ class SerialPortReader(listener: ActorRef, device: DeviceConfig) extends Actor w
   val configPort = device.parameters.getString("port")
 
   override def preStart = {
-    initPorts(SerialPort.getCommPorts.toIndexedSeq)
+    val ports = SerialPort.getCommPorts.toIndexedSeq
+    logger.info("\r\n=========== Found SERIAL ports ==========")
+    ports.foreach { port =>
+      logger.info(s"  ${port.getSystemPortName}")
+    }
+    logger.info("======================================\r\n")
+    initPorts(ports)
   }
 
   def initPorts(ports: Seq[SerialPort]) = {
