@@ -4,6 +4,7 @@
 *.npmignore
 *.DS_Store
 .idea/
+.bsp/
 
 # Akka specific
 
@@ -44,3 +45,5 @@ project/project/
 chrome1/
 
 !/.bsp/sbt.json
+!/.bsp/
+!/.bsp/
