@@ -5,8 +5,9 @@ import akka.actor._
 import com.typesafe.scalalogging.LazyLogging
 import sevts.terminal.Injector
 import sevts.terminal.config.Settings
-import sevts.terminal.platform5.BrowserRunner
+import sevts.terminal.platform5.{BrowserRunner, SecondLaunchBlocker}
 
+import java.net.ServerSocket
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
@@ -27,7 +28,12 @@ object AppServer extends LazyLogging {
 
   implicit val ec = ExecutionContext.global
 
+  var socketLock: ServerSocket = null
+
   def apply(config: Settings)(implicit system: ActorSystem) = {
+
+    socketLock = new SecondLaunchBlocker(config.preventSecondLaunch).run()
+
     system.actorOf(Props(classOf[StandardAppServer], config, system))
     if (!config.testAuthEnabled) {
       BrowserRunner(config).runMonitorWindows()

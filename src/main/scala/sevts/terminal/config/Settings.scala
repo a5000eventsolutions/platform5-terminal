@@ -293,6 +293,8 @@ object Settings {
 
 class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
 
+  val preventSecondLaunch = config.getBoolean("platform5.preventSecondLaunch")
+
   val printing = PrinterConfig(config.getConfig("platform5.printing"))
 
   val remoteEnabled = config.getBoolean("platform5.server.remote.enabled")
