@@ -294,6 +294,7 @@ object Settings {
 class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
 
   val preventSecondLaunch = config.getBoolean("platform5.preventSecondLaunch")
+  val frontOnly = config.getBoolean("platform5.frontOnly")
 
   val printing = PrinterConfig(config.getConfig("platform5.printing"))
 

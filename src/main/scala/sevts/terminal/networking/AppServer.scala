@@ -33,11 +33,15 @@ object AppServer extends LazyLogging {
   def apply(config: Settings)(implicit system: ActorSystem) = {
 
     socketLock = new SecondLaunchBlocker(config.preventSecondLaunch).run()
-
-    system.actorOf(Props(classOf[StandardAppServer], config, system))
     if (!config.testAuthEnabled) {
       BrowserRunner(config).runMonitorWindows()
     }
+    if(!config.frontOnly) {
+      system.actorOf(Props(classOf[StandardAppServer], config, system))
+    } else {
+      logger.info("Front only mode..")
+    }
+
   }
 
   private[AppServer] class StandardAppServer(val settings: Settings)(implicit val system: ActorSystem)
