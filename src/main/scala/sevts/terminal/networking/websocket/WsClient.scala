@@ -56,7 +56,7 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
   val (queueSource, futureQueue) = peekMatValue(Source.queue[BinaryMessage](10, OverflowStrategy.fail))
   futureQueue.map { r => self ! r }
 
-  val url = s"ws://${injector.settings.serverHost}:${injector.settings.webSocketPort.toString}/terminalws"
+  val url = s"${injector.settings.serverHost}/terminalws"
   val clientFuture = new AkkaWsClient(injector, url, self, queueSource.asInstanceOf[Source[BinaryMessage, NotUsed]]).connect()
   clientFuture.map {
     case Done => parent ! Connected

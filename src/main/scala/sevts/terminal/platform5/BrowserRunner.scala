@@ -30,7 +30,7 @@ class BrowserRunner(settings: Settings) extends LazyLogging {
     logger.info("Starting Сhrome browser")
 
     Try {
-      val url = s"http://${settings.serverHost}:${settings.serverPort}"
+      val url = s"${settings.webHost}"
 
       val loginParams = buildLoginParams(cfg)
       val terminalUrl = s"""--app=$url$loginParams"""
