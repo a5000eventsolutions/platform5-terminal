@@ -48,7 +48,8 @@ object ScannersService extends LazyLogging {
             logger.info(s"Search and Assign barcode value: `$value`")
             Seq(
               //OpenFormData(terminalId, value, badgeSearch.getOrElse(false), formList),
-              AssignBarcodeValue(terminalId, value)
+              //AssignBarcodeValue(terminalId, value)
+              TerminalEvent.OpenAndAssign(terminalId, value)
             )
           case msg =>
             logger.error(s"Disallowed reaction: $msg")
