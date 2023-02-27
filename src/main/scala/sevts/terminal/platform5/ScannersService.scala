@@ -47,7 +47,7 @@ object ScannersService extends LazyLogging {
           case Reaction.OpenAndAssign =>
             logger.info(s"Search and Assign barcode value: `$value`")
             Seq(
-              OpenFormData(terminalId, value, badgeSearch.getOrElse(false), formList),
+              //OpenFormData(terminalId, value, badgeSearch.getOrElse(false), formList),
               AssignBarcodeValue(terminalId, value)
             )
           case msg =>
