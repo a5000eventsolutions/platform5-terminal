@@ -27,11 +27,11 @@ object FormatsActor {
 class FormatsActor(settings: Settings) extends Actor {
   import FormatsActor._
 
-  private var actors = Map[FormatType, ActorRef]()
+  private var actors = Map[String, ActorRef]()
 
   override def preStart() = {
     settings.terminalConfig.formats.foreach { (format: FormatConfig) =>
-      actors += format.driverType -> (format.driverType match {
+      actors += format.name -> (format.driverType match {
         case FormatType.Plain => context.actorOf(PlainFormatActor.props(format))
       })
     }
@@ -39,6 +39,6 @@ class FormatsActor(settings: Settings) extends Actor {
 
   override def receive: Receive = {
     case Request.Process(scannerConfig,data) =>
-        actors(scannerConfig.format.driverType).tell(FormatActor.Request.Process(data), sender())
+        actors(scannerConfig.format.name).tell(FormatActor.Request.Process(data), sender())
   }
 }
