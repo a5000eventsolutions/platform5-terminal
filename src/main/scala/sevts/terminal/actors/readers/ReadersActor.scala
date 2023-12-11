@@ -94,6 +94,9 @@ case class ReadersActor(settings: Settings, Injector: Injector) extends Actor wi
         case DeviceDriverType.RRU9809 =>
           deviceActors += (device -> context.actorOf(Rfid9809ReaderActor.props(self, device),
             name = device.name + "-rru9809-reader-actor"))
+        case DeviceDriverType.VLAccess =>
+          deviceActors += (device -> context.actorOf(VLAccessReaderActor.props(self, device),
+            name = device.name + "-vlaccess-reader-actor"))
         case unknown =>
           logger.error(s"Unknown device type ${unknown.toString}")
       }

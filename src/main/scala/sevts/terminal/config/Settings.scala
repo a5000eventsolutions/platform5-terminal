@@ -23,12 +23,15 @@ object Settings {
     case object RRU9809 extends DeviceDriverType
     case object Omnikey extends DeviceDriverType
 
+    case object VLAccess extends DeviceDriverType
+
     def apply(value: String): DeviceDriverType = {
       value.toLowerCase match {
         case "serialport" => DeviceDriverType.SerialPort
         case "emulator"   => DeviceDriverType.Emulator
         case "rfid9809"   => DeviceDriverType.RRU9809
         case "omnikey"    => DeviceDriverType.Omnikey
+        case "vlaccess"   => DeviceDriverType.VLAccess
         case e: String => throw new IllegalStateException(s"Unknown device driver type $e")
       }
     }

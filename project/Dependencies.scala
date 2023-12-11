@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
 
-  object Versions { 
+  object Versions {
     val scala = "2.13.6"
     val platform5 = "1.0"
     val slf4j = "1.7.25"
@@ -16,7 +16,7 @@ object Dependencies {
     val jSerialComm = "2.7.0"
     val jsch = "0.1.54"
     val jnaerator = "0.12"
-    val scalatest = "3.0.8"
+    val scalatest = "3.2.15"
   }
 
 
@@ -41,7 +41,9 @@ object Dependencies {
 
     // Testing
     "org.scalatest" %% "scalatest" % Versions.scalatest % Test,
+    "org.scalatest" %% "scalatest-wordspec" %  Versions.scalatest % Test,
     "org.mockito" % "mockito-core" % "1.10.19" % Test,
+    "org.scalamock" %% "scalamock" % "5.2.0" % Test,
 
     //Serial port
     "com.fazecast" % "jSerialComm" % Versions.jSerialComm % Compile,
@@ -53,7 +55,10 @@ object Dependencies {
     "com.nativelibs4java" % "jnaerator-runtime" % Versions.jnaerator,
 
     "net.java.dev.jna" % "jna" % "5.11.0",
-    "com.nativelibs4java" % "jnaerator" % "0.12"
+    "com.nativelibs4java" % "jnaerator" % "0.12",
+
+    "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.23.0",
+    "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.23.0" % "provided"
   ))
 }
 
