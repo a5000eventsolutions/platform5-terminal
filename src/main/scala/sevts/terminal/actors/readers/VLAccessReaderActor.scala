@@ -96,7 +96,6 @@ class VLAccessReaderActor(listener: ActorRef,
       startConnection()
 
     case TextMessage.Strict(msg) =>
-      logger.info(msg)
       VLAccessReader.parseData(msg) match {
         case Left(e) =>
           logger.info("ping")
