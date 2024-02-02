@@ -25,7 +25,7 @@ object Dependencies {
 //    "sevts.platform5" %% "protocol" % Versions.platform5,
 //    "sevts.platform5" %% "domain" % Versions.platform5,
 
-    "io.altoo" %% "akka-kryo-serialization-typed" % "2.5.0",
+    "io.altoo" %% "akka-kryo-serialization-typed" % "2.5.2",
 
     // Logging
     "com.typesafe.scala-logging" %% "scala-logging" % Versions.scalaLogging % Compile,
