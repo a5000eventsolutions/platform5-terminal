@@ -19,7 +19,9 @@ lazy val commonSettings = Seq(
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding", "UTF-8",
-    "-Ymacro-annotations"
+    "-Ymacro-annotations",
+    "-unchecked",
+    "-Xlint:multiarg-infix"
   ),
   resolvers ++= Seq(
     Resolver.bintrayRepo("naftoligug", "maven"),
