@@ -6,14 +6,14 @@ object Dependencies {
     val scala = "2.13.11"
     val platform5 = "1.0"
     val slf4j = "1.7.25"
-    val akka = "2.6.12"
-    val log4j = "2.8.2"
-    val disruptor = "3.3.6"
+    val akka = "2.8.0"
+    val log4j = "2.20.0"
+    val disruptor = "3.4.4"
     val barcode4j = "2.1"
-    val scalaLogging = "3.9.3"
-    val pdfbox = "2.0.24"
+    val scalaLogging = "3.9.5"
+    val pdfbox = "2.0.27"
     val jna = "4.2.1"
-    val jSerialComm = "2.7.0"
+    val jSerialComm = "2.9.3"
     val jsch = "0.1.54"
     val jnaerator = "0.12"
     val scalatest = "3.2.15"
@@ -42,7 +42,7 @@ object Dependencies {
     // Testing
     "org.scalatest" %% "scalatest" % Versions.scalatest % Test,
     "org.scalatest" %% "scalatest-wordspec" %  Versions.scalatest % Test,
-    "org.mockito" % "mockito-core" % "1.10.19" % Test,
+    "org.mockito" % "mockito-core" % "5.2.0" % Test,
     "org.scalamock" %% "scalamock" % "5.2.0" % Test,
 
     //Serial port
@@ -54,7 +54,7 @@ object Dependencies {
     //rfid9809 scanner jna api
     "com.nativelibs4java" % "jnaerator-runtime" % Versions.jnaerator,
 
-    "net.java.dev.jna" % "jna" % "5.11.0",
+    "net.java.dev.jna" % "jna" % "5.12.1",
     "com.nativelibs4java" % "jnaerator" % "0.12",
 
     "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.23.0",
