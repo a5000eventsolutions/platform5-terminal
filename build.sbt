@@ -10,6 +10,12 @@ val protocolRef = ProjectRef(protoFile, "protocol")
 val domainFile = file("../platform5")
 val domainRef = ProjectRef(domainFile, "domain")
 
+val coreFile = file("../platform5")
+val coreRef = ProjectRef(domainFile, "core")
+
+val pl5File = file("../platform5")
+val pl5Ref = ProjectRef(domainFile, "server")
+
 //val platform5Project = (project in file("../platform5"))
 
 lazy val commonSettings = Seq(
@@ -56,5 +62,7 @@ lazy val terminal = (project in file("./"))
   .dependsOn(utilsRef)
   .dependsOn(protocolRef)
   .dependsOn(domainRef)
+  .dependsOn(coreRef)
+  .dependsOn(pl5Ref)
 
 
