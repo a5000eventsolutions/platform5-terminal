@@ -13,8 +13,8 @@ val domainRef = ProjectRef(domainFile, "domain")
 val coreFile = file("../platform5")
 val coreRef = ProjectRef(domainFile, "core")
 
-val pl5File = file("../platform5")
-val pl5Ref = ProjectRef(domainFile, "server")
+//val pl5File = file("../platform5")
+//val pl5Ref = ProjectRef(domainFile, "server")
 
 //val platform5Project = (project in file("../platform5"))
 
@@ -63,6 +63,6 @@ lazy val terminal = (project in file("./"))
   .dependsOn(protocolRef)
   .dependsOn(domainRef)
   .dependsOn(coreRef)
-  .dependsOn(pl5Ref)
+  //.dependsOn(pl5Ref)
 
 
