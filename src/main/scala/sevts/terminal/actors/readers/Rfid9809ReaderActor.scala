@@ -114,6 +114,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
     val portAddr=IntBuffer.allocate(1)
     //val errorCode = rfid.AutoOpenComPort(portAddr, comAddr, 5.toByte, frmHandle)
     val port  = device.parameters.getInt("port")
+    logger.info(s"RFID9809 initialize port $port")
     val errorCode = rfid.OpenComPort(port, comAddr, 5.toByte, frmHandle)
     if(errorCode != 0) {
       logger.error(s"Error connection to RFID scanner. Code=$errorCode")
