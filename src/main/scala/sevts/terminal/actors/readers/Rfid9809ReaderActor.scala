@@ -56,6 +56,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
   System.setProperty("java.library.path", injector.settings.usbRelay.dllPath)
   System.setProperty("jna.library.path", injector.settings.usbRelay.dllPath)
 
+  logger.info(s"Starting reader ${device.name}")
   val rfid = ComRfidRru9809Library.INSTANCE
 
   implicit val ec = context.dispatcher
@@ -69,6 +70,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
 
   override def preStart(): Unit = {
     self ! ReadEPC
+    logger.info(s"RFID 9809 started for ${device.name}")
   }
 
   override def receive: Receive = {
