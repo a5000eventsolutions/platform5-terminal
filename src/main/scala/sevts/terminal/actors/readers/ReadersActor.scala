@@ -13,8 +13,8 @@ import scala.util.control.NonFatal
 
 object ReadersActor {
 
-  def props(settings: Settings, Injector: Injector): Props = {
-    Props(classOf[ReadersActor], settings, Injector)
+  def props(settings: Settings, injector: Injector): Props = {
+    Props(new ReadersActor(settings, injector))
   }
 
   sealed trait DeviceEvent
@@ -41,7 +41,7 @@ object ReadersActor {
 
 }
 
-case class ReadersActor(settings: Settings, Injector: Injector) extends Actor with LazyLogging {
+case class ReadersActor(settings: Settings, injector: Injector) extends Actor with LazyLogging {
   import ReadersActor._
 
   private var listeners = Set[ActorRef]()
@@ -92,7 +92,7 @@ case class ReadersActor(settings: Settings, Injector: Injector) extends Actor wi
           deviceActors += (device -> context.actorOf(OmnikeyReaderActor.props(self, device),
             name = device.name + "-omnikey-reader-actor"))
         case DeviceDriverType.RRU9809 =>
-          deviceActors += (device -> context.actorOf(Rfid9809ReaderActor.props(self, device),
+          deviceActors += (device -> context.actorOf(Rfid9809ReaderActor.props(injector, self, device),
             name = device.name + "-rru9809-reader-actor"))
         case DeviceDriverType.VLAccess =>
           deviceActors += (device -> context.actorOf(VLAccessReaderActor.props(self, device),

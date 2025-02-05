@@ -2,10 +2,11 @@ package sevts.terminal.actors.readers
 
 import java.nio.{Buffer, ByteBuffer, IntBuffer}
 import java.util.concurrent.TimeUnit
-
 import akka.actor.{Actor, ActorRef, Props}
 import com.rfid.rru9809.ComRfidRru9809Library
+import com.sun.jna.Native
 import com.typesafe.scalalogging.LazyLogging
+import sevts.terminal.Injector
 import sevts.terminal.actors.readers.Rfid9809ReaderActor.Commands._
 import sevts.terminal.actors.readers.Rfid9809ReaderActor.Response.{WriteError, WriteOk}
 import sevts.terminal.actors.readers.SerialPortReader.Command.DataReceived
@@ -18,8 +19,8 @@ import scala.concurrent.duration.Duration
 
 object Rfid9809ReaderActor {
 
-  def props(listener: ActorRef, config: DeviceConfig): Props = {
-    Props(classOf[Rfid9809ReaderActor], listener, config)
+  def props(injector: Injector, listener: ActorRef, config: DeviceConfig): Props = {
+    Props(new Rfid9809ReaderActor(injector, listener, config))
   }
 
   case class ComPort(comAddr: ByteBuffer, frmHandle: Int)
@@ -48,9 +49,12 @@ object Rfid9809ReaderActor {
   }
 }
 
-class Rfid9809ReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor with LazyLogging {
+class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: DeviceConfig) extends Actor with LazyLogging {
 
   import Rfid9809ReaderActor._
+
+  System.setProperty("java.library.path", injector.settings.usbRelay.dllPath)
+  System.setProperty("jna.library.path", injector.settings.usbRelay.dllPath)
 
   val rfid = ComRfidRru9809Library.INSTANCE
 
