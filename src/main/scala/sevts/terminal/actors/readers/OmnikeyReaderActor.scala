@@ -72,7 +72,7 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor
     case Command.ReadCard(terminal) =>
       tryReadCard(terminal).foreach { result =>
         logger.info(s"Read value: $result")
-        listener ! ReadersActor.DeviceEvent.DataReceived(device.name, result)
+        listener ! ReadersActor.DeviceEvent.DataReceived(device.name, result.stripSuffix("9000"))
         context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
       }
 
