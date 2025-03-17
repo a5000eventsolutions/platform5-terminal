@@ -296,6 +296,10 @@ object Settings {
 
 class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
 
+  val buildVersion = config.getString("terminal_build")
+
+  logger.info(s"Terminal build: ${buildVersion}")
+
   val preventSecondLaunch = config.getBoolean("platform5.preventSecondLaunch")
   val frontOnly = config.getBoolean("platform5.frontOnly")
 
