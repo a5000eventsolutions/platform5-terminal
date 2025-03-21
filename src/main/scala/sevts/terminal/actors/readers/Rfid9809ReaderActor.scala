@@ -138,7 +138,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
     val dminfre = ByteBuffer.allocate(1)
     val powerdBm = ByteBuffer.allocate(1)
     val scanTime = ByteBuffer.allocate(1)
-    val result = rfid.GetReaderInformation(comAddr, versionInfo, readerType, trType, dmaxfre, dminfre, powerdBm, scanTime, frmHandle.get(0))
+    val result = rfid.GetReaderInformation(comAddr, versionInfo, readerType, trType, dmaxfre, dminfre, powerdBm, scanTime, frmHandle)
     logger.info(s"Rfid information: res(${result}) versionInfo(${versionInfo.get(0)}) readerType(${readerType.get(0)}) " +
       s"trType(${trType.get(0)}) dmaxfre(${dmaxfre.get(0)}) powerdBm(${powerdBm.get(0)}) scanTime(${scanTime.get(0)})")
   }
