@@ -76,6 +76,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
   override def receive: Receive = {
 
     case ReadEPC =>
+      readReaderInformation(comPort.comAddr, comPort.frmHandle)
       readEPCTag(comPort) map { epcTag =>
         listener ! ReadersActor.DeviceEvent.EPCReceived(device.name, epcTag)
         self ! ReadTID
@@ -84,6 +85,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
       }
 
     case ReadTID =>
+      readReaderInformation(comPort.comAddr, comPort.frmHandle)
       readTID(comPort, epcTag, 15) map { (data: String) =>
         listener ! ReadersActor.DeviceEvent.DataReceived(device.name, data)
         context.system.scheduler.scheduleOnce(writeTimeout, self, EpcWriteTimeOut)
@@ -96,6 +98,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
       context.system.scheduler.scheduleOnce(delay, self, ReadEPC)
 
     case WriteEpcData(data: String) =>
+      readReaderInformation(comPort.comAddr, comPort.frmHandle)
       writeEPC(comPort, epcTag, data.getBytes.toIndexedSeq, 10) map { result =>
         if(result == 0) {
           sender() ! WriteOk
@@ -123,11 +126,11 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
     logger.info(s"Rfid port COM$port initialized")
     logger.info(s"Rfid power:${power.toByte} set")
     rfid.SetPowerDbm(comAddr, power.toByte, frmHandle.get(0))
-    readReaderInformation(comAddr, frmHandle)
+    readReaderInformation(comAddr, frmHandle.get(0))
     ComPort(comAddr, frmHandle.get(0))
   }
 
-  private def readReaderInformation(comAddr: ByteBuffer,  frmHandle: IntBuffer) = {
+  private def readReaderInformation(comAddr: ByteBuffer,  frmHandle: Int) = {
     val versionInfo = ByteBuffer.allocate(2)
     val readerType = ByteBuffer.allocate(1)
     val trType = ByteBuffer.allocate(2)
