@@ -121,9 +121,23 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
       logger.error(s"Error connection to RFID scanner. Code=$errorCode")
     }
     logger.info(s"Rfid port COM$port initialized")
-    logger.info(s"Rfid power:$power set")
+    logger.info(s"Rfid power:${power.toByte} set")
     rfid.SetPowerDbm(comAddr, power.toByte, frmHandle.get(0))
+    readReaderInformation(comAddr, frmHandle)
     ComPort(comAddr, frmHandle.get(0))
+  }
+
+  private def readReaderInformation(comAddr: ByteBuffer,  frmHandle: IntBuffer) = {
+    val versionInfo = ByteBuffer.allocate(2)
+    val readerType = ByteBuffer.allocate(1)
+    val trType = ByteBuffer.allocate(2)
+    val dmaxfre = ByteBuffer.allocate(1)
+    val dminfre = ByteBuffer.allocate(1)
+    val powerdBm = ByteBuffer.allocate(1)
+    val scanTime = ByteBuffer.allocate(1)
+    val result = rfid.GetReaderInformation(comAddr, versionInfo, readerType, trType, dmaxfre, dminfre, powerdBm, scanTime, frmHandle.get(0))
+    logger.info(s"Rfid information: res(${result}) versionInfo(${versionInfo.get(0)}) readerType(${readerType.get(0)}) " +
+      s"trType(${trType.get(0)}) dmaxfre(${dmaxfre.get(0)}) powerdBm(${powerdBm.get(0)}) scanTime(${scanTime.get(0)})")
   }
 
   def readEPCTag(comPort: ComPort): Option[Array[Byte]] = {
