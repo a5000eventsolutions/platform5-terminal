@@ -121,6 +121,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
       logger.error(s"Error connection to RFID scanner. Code=$errorCode")
     }
     logger.info(s"Rfid port COM$port initialized")
+    logger.info(s"Rfid power:$power set")
     rfid.SetPowerDbm(comAddr, power.toByte, frmHandle.get(0))
     ComPort(comAddr, frmHandle.get(0))
   }
@@ -144,7 +145,6 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
       None
     } else None
   }
-
 
   @tailrec
   private def readTID(comPort: ComPort, epcTag: Array[Byte], counter: Int): Option[String] = {
