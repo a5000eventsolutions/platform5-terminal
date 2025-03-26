@@ -149,7 +149,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
   private def readTID(comPort: ComPort, epcTag: Array[Byte], counter: Int): Option[String] = {
 
     if(counter > 0) {
-      val TIDLength = 8
+      val TIDLength = 12
 
       val TIDmem = 0x02.toByte
       val password = ByteBuffer.allocate(8)
