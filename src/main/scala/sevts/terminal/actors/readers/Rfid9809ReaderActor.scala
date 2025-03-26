@@ -49,17 +49,7 @@ object Rfid9809ReaderActor {
 
   }
 
-  def getReadMode(device: DeviceConfig) = {
-    val readMode = Try(device.parameters.getString("readMode")).getOrElse("EPC")
-    readMode.toUpperCase match {
-      case "EPC" => "EPC"
-      case "TID" => "TID"
-      case unknown =>
-        "TID"
-    }
-  }
-
-  def getString(rfid: Array[Byte]) = rfid.map("%02X" format _).mkString
+  def getRfidString(rfid: Array[Byte]) = rfid.map("%02X" format _).mkString
 
 }
 
@@ -78,7 +68,8 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
   val delay = Duration(device.parameters.getInt("delay"), TimeUnit.MILLISECONDS)
   val writeTimeout = Duration(device.parameters.getInt("writeTimeout"), TimeUnit.MILLISECONDS)
 
-  val readMode = getReadMode(device)
+  val isReadModeEPC = Try(device.parameters.getBoolean("readEPC")).getOrElse(false)
+  val isReadModeTID = Try(device.parameters.getBoolean("readTID")).getOrElse(true)
 
   val comPort = connect()
   var epcTag: Array[Byte] = null
@@ -86,14 +77,15 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
 
   override def preStart(): Unit = {
     self ! ReadEPC
-    logger.info(s"RFID 9809 started for ${device.name} in ${readMode} read mode")
+    logger.info(s"RFID 9809 started for ${device.name}")
   }
 
   override def receive: Receive = {
 
     case ReadEPC =>
       readEPCTag(comPort) map { epcTag =>
-        listener ! ReadersActor.DeviceEvent.EPCReceived(device.name, epcTag)
+        if (isReadModeEPC)
+          listener ! ReadersActor.DeviceEvent.DataReceived(device.name, getRfidString(epcTag))
         self ! ReadTID
       } getOrElse  {
         context.system.scheduler.scheduleOnce(delay, self, ReadEPC)
@@ -101,7 +93,8 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
 
     case ReadTID =>
       readTID(comPort, epcTag, 15) map { (data: String) =>
-        listener ! ReadersActor.DeviceEvent.DataReceived(device.name, data)
+        if (isReadModeTID)
+          listener ! ReadersActor.DeviceEvent.DataReceived(device.name, data)
         context.system.scheduler.scheduleOnce(writeTimeout, self, EpcWriteTimeOut)
       } getOrElse {
         context.system.scheduler.scheduleOnce(delay, self, ReadEPC)
@@ -153,6 +146,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
       cleanedEPC.get(EPCTag, 0, length)
       logger.info(EPCTag.map(_.toChar).mkString)
       //EPCTag.map("%02X" format _).mkString
+      logger.info(s"EPC read success ${getRfidString(EPCTag)}")
       this.epcTag = EPCTag
       Some(EPCTag)
     } else if(result != 251){
@@ -184,8 +178,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
       if(result == 0) {
         val tid = Array.fill[Byte](TIDLength)(0)
         TIDOut.get(tid, 0, TIDLength)
-        val data = if (readMode.contains("TID")) getString(tid)
-        else getString(epcTag)
+        val data = tid.map("%02X" format _).mkString
         logger.info(s"TID read success $data")
         Some(data)
       } else {
