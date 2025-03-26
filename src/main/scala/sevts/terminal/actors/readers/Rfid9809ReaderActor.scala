@@ -1,20 +1,16 @@
 package sevts.terminal.actors.readers
 
-import java.nio.{Buffer, ByteBuffer, IntBuffer}
-import java.util.concurrent.TimeUnit
 import akka.actor.{Actor, ActorRef, Props}
 import com.rfid.rru9809.ComRfidRru9809Library
-import com.sun.jna.Native
 import com.typesafe.scalalogging.LazyLogging
 import sevts.terminal.Injector
 import sevts.terminal.actors.readers.Rfid9809ReaderActor.Commands._
 import sevts.terminal.actors.readers.Rfid9809ReaderActor.Response.{WriteError, WriteOk}
-import sevts.terminal.actors.readers.SerialPortReader.Command.DataReceived
-import sevts.terminal.actors.scanners.ScannersActor.Request.EPCReceived
 import sevts.terminal.config.Settings.DeviceConfig
 
+import java.nio.{ByteBuffer, IntBuffer}
+import java.util.concurrent.TimeUnit
 import scala.annotation.tailrec
-import scala.concurrent.blocking
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
@@ -27,24 +23,35 @@ object Rfid9809ReaderActor {
   case class ComPort(comAddr: ByteBuffer, frmHandle: Int)
 
   sealed trait Commands
+
   object Commands {
     case object ConnectRFID extends Commands
+
     case object ReadEPC extends Commands
+
     case object WriteEPC extends Commands
+
     case object ReadEPCTag extends Commands
+
     case class WriteEPCTag(data: Seq[Byte]) extends Commands
+
     case object ReadTID extends Commands
+
     case class WriteEpcData(value: String) extends Commands
+
     case object EpcWriteTimeOut extends Commands
   }
 
   sealed trait Response
+
   object Response {
     case object WriteOk extends Response
+
     case object WriteError extends Response
   }
 
   sealed trait Event
+
   object Event {
 
   }
@@ -87,7 +94,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
         if (isReadModeEPC)
           listener ! ReadersActor.DeviceEvent.DataReceived(device.name, getRfidString(epcTag))
         self ! ReadTID
-      } getOrElse  {
+      } getOrElse {
         context.system.scheduler.scheduleOnce(delay, self, ReadEPC)
       }
 
@@ -106,7 +113,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
 
     case WriteEpcData(data: String) =>
       writeEPC(comPort, epcTag, data.getBytes.toIndexedSeq, 10) map { result =>
-        if(result == 0) {
+        if (result == 0) {
           sender() ! WriteOk
         } else sender() ! WriteError
       } getOrElse {
@@ -120,12 +127,12 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
   def connect() = {
     val comAddr = ByteBuffer.allocate(1)
     val frmHandle = IntBuffer.allocate(1)
-    val portAddr=IntBuffer.allocate(1)
+    val portAddr = IntBuffer.allocate(1)
     //val errorCode = rfid.AutoOpenComPort(portAddr, comAddr, 5.toByte, frmHandle)
-    val port  = device.parameters.getInt("port")
+    val port = device.parameters.getInt("port")
     logger.info(s"RFID9809 initialize port $port")
     val errorCode = rfid.OpenComPort(port, comAddr, 5.toByte, frmHandle)
-    if(errorCode != 0) {
+    if (errorCode != 0) {
       logger.error(s"Error connection to RFID scanner. Code=$errorCode")
     }
     logger.info(s"Rfid port COM$port initialized")
@@ -138,7 +145,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
     val totalLen = IntBuffer.allocate(8)
     val cardNum = IntBuffer.allocate(8)
     val result = rfid.Inventory_G2(comPort.comAddr, cleanedEPC, totalLen, cardNum, comPort.frmHandle)
-    if(result == 1) {
+    if (result == 1) {
       logger.info("Rfid EPC read success")
       val length = cleanedEPC.get(0)
       val EPCTag = Array.fill[Byte](length)(0)
@@ -149,7 +156,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
       logger.info(s"EPC read success ${getRfidString(EPCTag)}")
       this.epcTag = EPCTag
       Some(EPCTag)
-    } else if(result != 251){
+    } else if (result != 251) {
       None
     } else None
   }
@@ -158,7 +165,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
   @tailrec
   private def readTID(comPort: ComPort, epcTag: Array[Byte], counter: Int): Option[String] = {
 
-    if(counter > 0) {
+    if (counter > 0) {
       val TIDLength = 8
 
       val TIDmem = 0x02.toByte
@@ -168,14 +175,14 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
       val maskAddr = 0.toByte
       val maskLen = 0.toByte
       val maskFlag = 0.toByte
-      val TIDOut = ByteBuffer.allocate(64)//TIDLength)
+      val TIDOut = ByteBuffer.allocate(64) //TIDLength)
       val EPCLength = epcTag.length.toByte
       val errorCode = IntBuffer.allocate(1)
       val result = rfid.ReadCard_G2(comPort.comAddr,
         ByteBuffer.wrap(epcTag), TIDmem, wordPtr, num, password,
         maskAddr, maskLen, maskFlag, TIDOut, EPCLength, errorCode,
         comPort.frmHandle)
-      if(result == 0) {
+      if (result == 0) {
         val tid = Array.fill[Byte](TIDLength)(0)
         TIDOut.get(tid, 0, TIDLength)
         val data = tid.map("%02X" format _).mkString
@@ -191,15 +198,15 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
 
   @tailrec
   private def writeEPC(comPort: ComPort, EPCTag: Array[Byte], data: Seq[Byte], counter: Int): Option[Int] = {
-    if(counter > 0) {
+    if (counter > 0) {
       val password = ByteBuffer.allocate(8)
       val writeDataLen = data.length.toByte
       val writeData = ByteBuffer.wrap(data.toArray)
       val errorCode = IntBuffer.allocate(1)
 
       val result = rfid.WriteEPC_G2(comPort.comAddr, password, writeData, writeDataLen, errorCode, comPort.frmHandle)
-      if(result != 0) {
-        if(result != 251) {
+      if (result != 0) {
+        if (result != 251) {
           logger.error(s"Write EPC error. Code - ${result.toString}")
         }
         writeEPC(comPort, EPCTag, data, counter - 1)
