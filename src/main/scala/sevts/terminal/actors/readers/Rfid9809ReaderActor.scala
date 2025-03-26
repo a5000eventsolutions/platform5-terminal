@@ -16,6 +16,7 @@ import sevts.terminal.config.Settings.DeviceConfig
 import scala.annotation.tailrec
 import scala.concurrent.blocking
 import scala.concurrent.duration.Duration
+import scala.util.Try
 
 object Rfid9809ReaderActor {
 
@@ -47,6 +48,19 @@ object Rfid9809ReaderActor {
   object Event {
 
   }
+
+  def getReadMode(device: DeviceConfig) = {
+    val readMode = Try(device.parameters.getString("readMode")).getOrElse("EPC")
+    readMode.toUpperCase match {
+      case "EPC" => "EPC"
+      case "TID" => "TID"
+      case unknown =>
+        "TID"
+    }
+  }
+
+  def getString(rfid: Array[Byte]) = rfid.map("%02X" format _).mkString
+
 }
 
 class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: DeviceConfig) extends Actor with LazyLogging {
@@ -64,13 +78,15 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
   val delay = Duration(device.parameters.getInt("delay"), TimeUnit.MILLISECONDS)
   val writeTimeout = Duration(device.parameters.getInt("writeTimeout"), TimeUnit.MILLISECONDS)
 
+  val readMode = getReadMode(device)
+
   val comPort = connect()
   var epcTag: Array[Byte] = null
 
 
   override def preStart(): Unit = {
     self ! ReadEPC
-    logger.info(s"RFID 9809 started for ${device.name}")
+    logger.info(s"RFID 9809 started for ${device.name} in ${readMode} read mode")
   }
 
   override def receive: Receive = {
@@ -136,7 +152,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
       cleanedEPC.position(1)
       cleanedEPC.get(EPCTag, 0, length)
       logger.info(EPCTag.map(_.toChar).mkString)
-      //EPCTag.map("%02X" format _).mkString)
+      //EPCTag.map("%02X" format _).mkString
       this.epcTag = EPCTag
       Some(EPCTag)
     } else if(result != 251){
@@ -149,7 +165,7 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
   private def readTID(comPort: ComPort, epcTag: Array[Byte], counter: Int): Option[String] = {
 
     if(counter > 0) {
-      val TIDLength = 12
+      val TIDLength = 8
 
       val TIDmem = 0x02.toByte
       val password = ByteBuffer.allocate(8)
@@ -168,7 +184,8 @@ class Rfid9809ReaderActor(injector: Injector, listener: ActorRef, device: Device
       if(result == 0) {
         val tid = Array.fill[Byte](TIDLength)(0)
         TIDOut.get(tid, 0, TIDLength)
-        val data = tid.map("%02X" format _).mkString
+        val data = if (readMode.contains("TID")) getString(tid)
+        else getString(epcTag)
         logger.info(s"TID read success $data")
         Some(data)
       } else {
