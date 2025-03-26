@@ -296,7 +296,7 @@ object Settings {
 
 class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
 
-  val buildVersion = config.getString("build_date")
+  val buildVersion = Try(config.getString("build_date")).getOrElse("terminal version not found")
 
   logger.info(s"Terminal build: ${buildVersion}")
 
