@@ -29,9 +29,8 @@ lazy val commonSettings = Seq(
     "-unchecked",
     "-Xlint:multiarg-infix"
   ),
-  resolvers ++= Seq(
-    Resolver.bintrayRepo("naftoligug", "maven"),
-    Resolver.sonatypeRepo("snapshots"))
+  resolvers += Resolver.bintrayRepo("naftoligug", "maven"),
+  resolvers ++= Resolver.sonatypeOssRepos("snapshots")
 )
 
 
