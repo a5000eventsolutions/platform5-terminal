@@ -36,6 +36,7 @@ object Rfid9809ReaderActor {
     case object ReadTID extends Commands
     case class WriteEpcData(value: String) extends Commands
     case object EpcWriteTimeOut extends Commands
+    case class WriteUserData(bytes: Seq[Byte]) extends Commands
   }
 
   sealed trait Response
