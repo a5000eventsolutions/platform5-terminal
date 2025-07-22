@@ -135,8 +135,10 @@ class Rfid9809WriteReaderActor(injector: Injector, listener: ActorRef, device: D
 
   whenUnhandled {
     case Event(msg: ServerMessage, d: IdleData) =>
+      logger.info(s"Received message ${msg.msg}")
       msg.msg match {
         case data: WriteRfidUserMemoryEvent =>
+          logger.info(s"Write user memory event ${data.value}")
           val bytes = data.value.getBytes("UTF-8").toIndexedSeq
           stay using d.copy(pending = Some(PendingWrite(bytes, sender())))
         case _ =>
