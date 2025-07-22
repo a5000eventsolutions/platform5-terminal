@@ -92,8 +92,8 @@ case class ReadersActor(settings: Settings, injector: Injector) extends Actor wi
           deviceActors += (device -> context.actorOf(OmnikeyReaderActor.props(self, device),
             name = device.name + "-omnikey-reader-actor"))
         case DeviceDriverType.RRU9809 =>
-          deviceActors += (device -> context.actorOf(Rfid9809ReaderActor.props(injector, self, device),
-            name = device.name + "-rru9809-reader-actor"))
+          deviceActors += (device -> context.actorOf(Rfid9809WriteReaderActor.props(injector, self, device),
+            name = device.name + "-rru9809-write-reader-actor"))
         case DeviceDriverType.VLAccess =>
           deviceActors += (device -> context.actorOf(VLAccessReaderActor.props(self, device),
             name = device.name + "-vlaccess-reader-actor"))
