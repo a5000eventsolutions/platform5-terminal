@@ -89,8 +89,8 @@ case class ReadersActor(settings: Settings, injector: Injector) extends Actor wi
           deviceActors += (device -> context.actorOf(SerialPortReader.props(self, device),
             name = device.name + "-serialport-reader-actor"))
         case DeviceDriverType.Omnikey =>
-          deviceActors += (device -> context.actorOf(OmnikeyReaderActor.props(self, device),
-            name = device.name + "-omnikey-reader-actor"))
+          deviceActors += (device -> context.actorOf(OmnikeyWriteReaderActor.props(self, device),
+            name = device.name + "-omnikey-write-reader-actor"))
         case DeviceDriverType.RRU9809 =>
           deviceActors += (device -> context.actorOf(Rfid9809WriteReaderActor.props(injector, self, device),
             name = device.name + "-rru9809-write-reader-actor"))
