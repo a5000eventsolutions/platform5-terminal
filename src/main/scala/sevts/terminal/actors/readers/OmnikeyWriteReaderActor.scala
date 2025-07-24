@@ -99,6 +99,14 @@ class OmnikeyWriteReaderActor(listener: ActorRef, device: DeviceConfig)
           stay()
       }
 
+    case Event(StartTerminalRead(term), IdleData(p)) =>
+      readUidAsync(term)
+      goto(ReadUid) using TerminalData(term, p)
+      
+    case Event(TerminalData(term, pending), IdleData(_)) =>
+      readUidAsync(term)
+      goto(ReadUid) using TerminalData(term, pending)
+
     case Event(cmd: WriteUserData, IdleData(_)) =>
       self ! Tick
       goto(WaitCard) using IdleData(Some(mkJob(cmd.bytes, cmd.replyTo)))
