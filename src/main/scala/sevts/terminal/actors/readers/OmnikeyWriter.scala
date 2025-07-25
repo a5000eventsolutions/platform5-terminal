@@ -12,77 +12,42 @@ object OmnikeyWriter extends LazyLogging {
 
   private val DefaultKeyHex = "ffffffffffff"
 
-  /**
-   * @param terminal    PC/SC терминал
-   * @param payload     произвольные данные, которые нужно записать
-   * @param keyHex      ключ сектора (по умолчанию FF..FF)
-   * @param useKeyA     true → KEY_A, false → KEY_B
-   * @param sectors     количество секторов: 16 для 1K, 40 для 4K
-   * @param startSector с какого сектора начинать писать (обычно 1, чтобы не трогать сектор 0)
-   * @return            true, если всё записали и верифицировали; false — если не хватило места или ошибка
-   */
+
   def writeUserData(terminal: CardTerminal,
-                    payload: Array[Byte],
+                    sector: Int,
+                    data: String,
                     keyHex: String = DefaultKeyHex,
-                    useKeyA: Boolean = true,
-                    sectors: Int = 16,
-                    startSector: Int = 1
+                    useKeyA: Boolean = true
                    ): Option[Boolean] = {
     try {
       blocking {
-        if (!terminal.waitForCardPresent(0)) return None
+        val mcrw = new MifareClassicReaderWriter(terminal)
 
-        val card: Card = terminal.connect("*")
-        val mcrw: MifareClassicReaderWriter = new OmnikeyWriter(card)
+        logger.info(s"readCardInfo: ${mcrw.readCardInfo()}")
+
+        // библиотека сама подождёт/подключится через readCard(), используя переданный терминал
+        logger.info(s"readCard... ")
+        mcrw.readCard()
 
         val keyType = if (useKeyA) MifareClassicReaderWriter.KEY_A else MifareClassicReaderWriter.KEY_B
-
-        logger.info(s"Write Mifare Classic user data: ${payload.mkString(",")}")
+        logger.info(s"loading key... keyType: $keyType")
         mcrw.loadKey(keyType, keyHex)
 
-        val chunks = payload.grouped(16).toArray
-        val capacityBlocks = (sectors - startSector) * 3 // по 3 пользовательских блока на сектор
-        if (chunks.length > capacityBlocks) {
-          // места не хватит — можно либо вернуть false, либо частично записать
-          logger.warn(s"Not enough space for ${chunks.length} blocks, only ${capacityBlocks} blocks available")
-          mcrw.disconnect()
-          return None
-        }
+        logger.info(s"writeSectorString... sector: $sector, data: $data")
+        mcrw.writeSectorString(sector, data)
 
-        var chunkIdx = 0
-        var ok = true
-
-        var sector = startSector
-        while (sector < sectors && chunkIdx < chunks.length && ok) {
-          var blockInSector = 0
-          while (blockInSector <= 2 && chunkIdx < chunks.length && ok) {
-            val absBlock = toAbsoluteBlock(sector, blockInSector)
-            val data16   = padTo16(chunks(chunkIdx))
-            val hex      = toHex(data16)
-
-            mcrw.writeBlockHexString(absBlock, hex)
-            val back = mcrw.readBlockHexString(absBlock)
-            if (!back.equalsIgnoreCase(hex)) ok = false else chunkIdx += 1
-
-            blockInSector += 1
-          }
-          sector += 1
-        }
-
-        logger.info("Disconnecting from card")
+        logger.info(s"readSectorString...")
+        val back = mcrw.readSectorString(sector)
         mcrw.disconnect()
-
-        val result = ok && chunkIdx == chunks.length
-        logger.info(s"Write operation completed: $result (ok=$ok, written blocks=$chunkIdx/${chunks.length})")
-        if (result) Some(true) else None
+        logger.info(s"back: $back")
+        if(back == data) Some(true) else None
       }
     } catch {
       case e: CardException =>
-        // подключите свой логгер/сигнал Reconnect, если требуется
-        logger.error("CardException", e)
+        logger.error(s"CardException: ${e.getMessage}")
         None
       case NonFatal(_) =>
-        logger.error("NonFatal", e)
+        logger.error("NonFatal error")
         None
     }
   }
@@ -110,8 +75,4 @@ object OmnikeyWriter extends LazyLogging {
     if (sector < 32) sector * 4 + blockInSector
     else 32 * 4 + (sector - 32) * 16 + blockInSector
   }
-}
-
-class OmnikeyWriter(private val c: Card) extends MifareClassicReaderWriter {
-  override def getCard: Card = c
 }

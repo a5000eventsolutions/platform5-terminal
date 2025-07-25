@@ -54,9 +54,10 @@ public class MifareClassicReaderWriter {
     protected int cardBlocksNumber;
     protected int cardSectorsNumber;
 
-    public MifareClassicReaderWriter() throws MifareClassicCardException, CardException {
+    public MifareClassicReaderWriter(CardTerminal terminal) throws MifareClassicCardException, CardException {
 
-        terminal = TerminalFactory.getDefault().terminals().list().get(0);
+        terminal = terminal;
+
     }
 
     public CardTerminal getTerminal() {
@@ -518,7 +519,9 @@ public class MifareClassicReaderWriter {
                 throw new MifareClassicCardException("Invalid Key Length: " + key.length());
             }
 
-            MifareClassicReaderWriter device = new MifareClassicReaderWriter();
+            CardTerminal terminalLocal = TerminalFactory.getDefault().terminals().list().get(0);
+
+            MifareClassicReaderWriter device = new MifareClassicReaderWriter(terminalLocal);
             device.readCard();
             device.loadKey(keyAB, key);
 

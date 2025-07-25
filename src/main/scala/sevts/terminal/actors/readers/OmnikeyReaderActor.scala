@@ -84,7 +84,7 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
 
     case Command.WriteCard(terminal) =>
       val payload = "http://yandfex.ru".getBytes("UTF-8")
-      OmnikeyWriter.writeUserData(terminal, payload).foreach { _ =>
+      OmnikeyWriter.writeUserData(terminal, 1, payload.mkString).foreach { _ =>
         logger.info(s"Write payload ${payload.mkString(" ")} ok")
         context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
       }
