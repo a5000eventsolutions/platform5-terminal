@@ -21,6 +21,7 @@ object OmnikeyReaderActor {
     //case class DataReceived(port: SerialPort) extends Command
     case class StartTerminalRead(terminal: CardTerminal) extends Command
     case class ReadCard(terminal: CardTerminal) extends Command
+    case class WriteCard(terminal: CardTerminal) extends Command
     case object ReconnectCard extends Command
   }
 
@@ -37,7 +38,11 @@ object OmnikeyReaderActor {
 
 }
 
-class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor with LazyLogging {
+class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
+  extends Actor
+    with LazyLogging
+    with SmartCardOperations {
+
   import OmnikeyReaderActor._
 
   implicit val system = context.system
@@ -73,6 +78,13 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor
       tryReadCard(terminal).foreach { result =>
         logger.info(s"Read value: $result")
         listener ! ReadersActor.DeviceEvent.DataReceived(device.name, result.stripSuffix("9000"))
+        context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
+      }
+
+    case Command.WriteCard(terminal) =>
+      val payload = "http://yandfex.ru".getBytes("UTF-8")
+      tryWriteMifareClassic(terminal, startBlock = 4, payload).foreach { result =>
+        logger.info(s"Write result: $result")
         context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
       }
 
@@ -144,4 +156,96 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor
   def bytearray2intarray(barray: Array[Byte]) = {
     barray.map(b => b & 0xff)
   }
+
+
+  protected def tryWriteMifareClassic(terminal: CardTerminal,
+                                      startBlock: Int,
+                                      payload: Array[Byte],
+                                      key: Array[Byte] = Array.fill(6)(0xFF.toByte), // Key A по умолчанию
+                                      useKeyA: Boolean = true
+                                     ): Option[Int] = {
+    try {
+      blocking {
+        if (!terminal.waitForCardPresent(0)) return None
+
+        logger.info("RFID card found (write)...")
+        val card: Card = terminal.connect("*")
+
+        try {
+          loadKey(card, key, 0x00.toByte)
+
+          val chunks = payload.grouped(16).toIndexedSeq
+          var written = 0
+
+          chunks.indices.foreach { i =>
+            val block = startBlock + i
+            if (isTrailerBlock(block)) {
+              logger.warn(s"Skip trailer block $block")
+            } else {
+              authenticate(card, block.toByte, useKeyA, 0x00.toByte)
+              val data16 =
+                if (chunks(i).length == 16) chunks(i)
+                else chunks(i).padTo(16, 0.toByte)
+              writeBlock(card, block.toByte, data16.toArray)
+              written += 1
+            }
+          }
+
+          Some(written)
+        } finally {
+          try card.disconnect(false) catch {
+            case _: Throwable =>
+          }
+        }
+      }
+    } catch {
+      case e: CardException =>
+        logger.error(e.getMessage, e)
+        self ! Command.ReconnectCard
+        None
+      case e: Throwable if NonFatal(e) =>
+        logger.error(e.getMessage, e)
+        self ! Command.ReconnectCard
+        None
+    }
+  }
+
+
+  private def isTrailerBlock(block: Int): Boolean =
+    (block + 1) % 4 == 0 // для MIFARE Classic 1K
+
+  private def transmit(card: Card, apdu: Array[Byte]): ResponseAPDU =
+    card.getBasicChannel.transmit(new CommandAPDU(apdu))
+
+  private def check(resp: ResponseAPDU, msg: String): Unit = {
+    if (resp.getSW != 0x9000) throw new CardException(f"$msg, SW=${resp.getSW}%04X")
+  }
+
+  // FF 82 00 <slot> 06 <6-byte key>
+  private def loadKey(card: Card, key: Array[Byte], slot: Byte): Unit = {
+    val apdu = Array[Byte](0xFF.toByte, 0x82.toByte, 0x00, slot, 0x06) ++ key
+    val resp = transmit(card, apdu)
+    check(resp, "LOAD KEY failed")
+  }
+
+  // FF 86 00 00 05 01 00 <block> <keyType> <slot>
+  private def authenticate(card: Card, block: Byte, keyTypeA: Boolean, slot: Byte): Unit = {
+    val keyType: Byte = if (keyTypeA) 0x60.toByte else 0x61.toByte
+    val apdu = Array[Byte](
+      0xFF.toByte, 0x86.toByte, 0x00, 0x00, 0x05,
+      0x01, 0x00, block, keyType, slot
+    )
+    val resp = transmit(card, apdu)
+    check(resp, s"AUTH block=$block failed")
+  }
+
+  // FF D6 00 <block> 10 <16 bytes>
+  private def writeBlock(card: Card, block: Byte, data16: Array[Byte]): Unit = {
+    require(data16.length == 16, "MIFARE Classic block size = 16 bytes")
+    val apdu = Array[Byte](0xFF.toByte, 0xD6.toByte, 0x00, block, 0x10.toByte) ++ data16
+    val resp = transmit(card, apdu)
+    check(resp, s"WRITE block=$block failed")
+  }
+
+
 }

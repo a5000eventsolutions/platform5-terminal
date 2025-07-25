@@ -102,7 +102,7 @@ class OmnikeyWriteReaderActor(listener: ActorRef, device: DeviceConfig)
     case Event(StartTerminalRead(term), IdleData(p)) =>
       readUidAsync(term)
       goto(ReadUid) using TerminalData(term, p)
-      
+
     case Event(TerminalData(term, pending), IdleData(_)) =>
       readUidAsync(term)
       goto(ReadUid) using TerminalData(term, pending)

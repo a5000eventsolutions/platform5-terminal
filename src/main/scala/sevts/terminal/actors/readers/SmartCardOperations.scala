@@ -8,7 +8,7 @@ import scala.util.control.NonFatal
 
 trait SmartCardOperations extends LazyLogging {
 
-  def writeUserData(card: Card, bytes: Seq[Byte], retries: Int): Boolean = {
+  def writeUserData(card: Card, bytes: Seq[Byte], retries: Int = 5): Boolean = {
     try {
       logger.info(s"Write Mifare Classic user data: ${bytes.mkString(",")}")
       writeMifareClassic(card, startBlock = 4, data = bytes.toArray)
