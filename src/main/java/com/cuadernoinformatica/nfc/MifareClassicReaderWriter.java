@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.HexFormat;
+//import java.util.HexFormat;
 
 import javax.smartcardio.Card;
 import javax.smartcardio.CardChannel;
@@ -91,12 +91,31 @@ public class MifareClassicReaderWriter {
         return cardSectorsNumber;
     }
 
+    private static String toHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) sb.append(String.format("%02x", b));
+        return sb.toString();
+    }
+
+    private static byte[] fromHex(String s) {
+        int len = s.length();
+        byte[] out = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            int hi = Character.digit(s.charAt(i), 16);
+            int lo = Character.digit(s.charAt(i + 1), 16);
+            out[i / 2] = (byte) ((hi << 4) + lo);
+        }
+        return out;
+    }
+
     public String encodeHexString(byte[] data) {
-        return HexFormat.of().formatHex(data).toUpperCase();
+        //return HexFormat.of().formatHex(data).toUpperCase();
+        return toHex(data).toUpperCase();
     }
 
     public byte[] decodeHexString(String data) {
-        return HexFormat.of().parseHex(data);
+        //return HexFormat.of().parseHex(data);
+        return fromHex(data);
     }
 
     public byte[] concatArrays(byte[] data1, byte[] data2) {
