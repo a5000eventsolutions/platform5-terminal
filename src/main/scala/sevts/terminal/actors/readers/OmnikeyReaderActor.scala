@@ -158,19 +158,15 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
     barray.map(b => b & 0xff)
   }
 
-  // ---- PATCH: loadKey с p1 и fallback ----
-  protected def loadKey(card: Card, key: Array[Byte], slot: Byte, p1: Byte): Unit = {
-    // FF 82 <p1:key structure> <slot> 06 <key>
-    val apdu = Array[Byte](0xFF.toByte, 0x82.toByte, p1, slot, 0x06) ++ key
-    val resp = transmit(card, apdu)
-    check(resp, f"LOAD KEY failed (p1=0x$p1%02X, slot=$slot)")
-  }
-
-
+  /**
+   * Write payload to MIFARE Classic card starting from `startBlock`.
+   * Splits into 16-byte blocks, skips trailer blocks, authenticates with Key A/B.
+   * Returns number of written data blocks wrapped in Some, or None on failure / no card.
+   */
   protected def tryWriteMifareClassic(terminal: CardTerminal,
                                       startBlock: Int,
                                       payload: Array[Byte],
-                                      key: Array[Byte] = Array.fill(6)(0xFF.toByte), // Key A по умолчанию
+                                      key: Array[Byte] = Array.fill(6)(0xFF.toByte), // default Key A
                                       useKeyA: Boolean = true
                                      ): Option[Int] = {
     try {
@@ -178,13 +174,13 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
         if (!terminal.waitForCardPresent(0)) return None
 
         logger.info("RFID card found (write)...")
-        val card: Card = terminal.connect("*")
+        val card = terminal.connect("*")
 
         try {
-          // ВАЖНО: для HID OMNIKEY сперва пробуем p1 = 0x20, потом 0x00 (делает MifareClassicKeyOps.loadKey)
+          // HID OMNIKEY friendly: try p1=0x20, then 0x00 inside loadKey
           loadKey(card, key, 0x00.toByte)
 
-          val chunks = payload.grouped(16).toIndexedSeq
+          val chunks  = payload.grouped(16).toIndexedSeq
           var written = 0
 
           chunks.indices.foreach { i =>
@@ -210,9 +206,7 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
             logger.error("MIFARE Classic write failed (non-fatal)", e)
             None
         } finally {
-          try card.disconnect(false) catch {
-            case _: Throwable => ()
-          }
+          try card.disconnect(false) catch { case _: Throwable => () }
         }
       }
     } catch {
@@ -222,7 +216,6 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
     }
   }
 
-
   private def isTrailerBlock(block: Int): Boolean =
     (block + 1) % 4 == 0 // для MIFARE Classic 1K
 
@@ -231,13 +224,6 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
 
   private def check(resp: ResponseAPDU, msg: String): Unit = {
     if (resp.getSW != 0x9000) throw new CardException(f"$msg, SW=${resp.getSW}%04X")
-  }
-
-  // FF 82 00 <slot> 06 <6-byte key>
-  private def loadKey(card: Card, key: Array[Byte], slot: Byte): Unit = {
-    val apdu = Array[Byte](0xFF.toByte, 0x82.toByte, 0x00, slot, 0x06) ++ key
-    val resp = transmit(card, apdu)
-    check(resp, "LOAD KEY failed")
   }
 
   // FF 86 00 00 05 01 00 <block> <keyType> <slot>
@@ -257,6 +243,41 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
     val apdu = Array[Byte](0xFF.toByte, 0xD6.toByte, 0x00, block, 0x10.toByte) ++ data16
     val resp = transmit(card, apdu)
     check(resp, s"WRITE block=$block failed")
+  }
+
+
+  /**
+   * High-level LOAD KEY that is friendly to HID OMNIKEY:
+   *   - tries p1 = 0x20 (volatile key structure) first
+   *   - falls back to p1 = 0x00 (ACS-style)
+   * Throws CardException if both attempts fail.
+   */
+  def loadKey(card: Card, key: Array[Byte], slot: Byte): Unit = {
+    val attempts = Seq[Byte](0x20.toByte, 0x00.toByte)
+    var lastErr: Option[Throwable] = None
+    var loaded  = false
+
+    attempts.iterator.takeWhile(_ => !loaded).foreach { p1 =>
+      try {
+        loadKey(card, key, slot, p1)
+        loaded = true
+        logger.debug(f"LOAD KEY ok with p1=0x$p1%02X, slot=$slot")
+      } catch {
+        case e: CardException =>
+          lastErr = Some(e)
+          logger.warn(f"LOAD KEY failed with p1=0x$p1%02X, will try next")
+      }
+    }
+
+    if (!loaded) throw lastErr.getOrElse(new CardException("LOAD KEY failed for all key structures (0x20, 0x00)"))
+  }
+
+  /** Low-level variant: send FF 82 with explicitly provided key structure (p1). */
+  def loadKey(card: Card, key: Array[Byte], slot: Byte, p1: Byte): Unit = {
+    // FF 82 <p1:key structure> <slot> 06 <key>
+    val apdu = Array[Byte](0xFF.toByte, 0x82.toByte, p1, slot, 0x06) ++ key
+    val resp = transmit(card, apdu)
+    check(resp, f"LOAD KEY failed (p1=0x$p1%02X, slot=$slot)")
   }
 
 
