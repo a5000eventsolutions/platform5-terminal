@@ -31,7 +31,7 @@ import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 import javax.smartcardio.TerminalFactory;
 
-public class MifareClassicReaderWriter {
+public abstract class MifareClassicReaderWriter {
 
     public static int CLASS = 0xFF;
     public static int GET_UID = 0xCA;
@@ -45,7 +45,6 @@ public class MifareClassicReaderWriter {
     public static int DECREMENT_VALUE_BLOCK = 0xC0;
     public static int INCREMENT_VALUE_BLOCK = 0xC1;
 
-    protected CardTerminal terminal;
     protected Card card;
     protected CardChannel channel;
     protected String atr;
@@ -54,15 +53,10 @@ public class MifareClassicReaderWriter {
     protected int cardBlocksNumber;
     protected int cardSectorsNumber;
 
-    public MifareClassicReaderWriter(CardTerminal terminal) throws MifareClassicCardException, CardException {
-
-        terminal = terminal;
-
+    public MifareClassicReaderWriter() throws MifareClassicCardException, CardException {
     }
 
-    public CardTerminal getTerminal() {
-        return terminal;
-    }
+    public abstract CardTerminal getTerminal();
 
     public Card getCard() {
         return card;
@@ -167,9 +161,9 @@ public class MifareClassicReaderWriter {
 
     public void readCard() throws CardException, MifareClassicCardException {
 
-        terminal.waitForCardPresent(0);
+        getTerminal().waitForCardPresent(0);
 
-        card = terminal.connect("*");
+        card = getTerminal().connect("*");
 
         atr = encodeHexString(card.getATR().getBytes());
 
@@ -433,7 +427,7 @@ public class MifareClassicReaderWriter {
 
         StringBuilder builder = new StringBuilder();
 
-        builder.append("Terminal: " + terminal + "\n");
+        builder.append("Terminal: " + getTerminal() + "\n");
         builder.append("Card: " + card + "\n");
         builder.append("Card ATR: " + atr + "\n");
         builder.append("Card Type: " + typeName + "\n");
@@ -451,193 +445,191 @@ public class MifareClassicReaderWriter {
         card.disconnect(false);
     }
 
-    public static void main(String[] args) {
-        try {
-
-            if (args.length == 0) {
-                System.out.println("Usage:"
-                        + "\n\tmcrw a|b key action block|sector"
-                        + " data|value"
-
-                        + "\n\techo $data | mcrw a|b"
-                        + " key action block|sector\n");
-
-                System.out.println("Actions:"
-                        + " \n\tread-block block"
-                        + " \n\tread-block-string block"
-                        + " \n\twrite-block block data"
-                        + " \n\twrite-block-string block data"
-                        + " \n\tclear-block block"
-                        + " \n"
-                        + " \n\tformat-value-block block"
-                        + " \n\tread-value-block block"
-                        + " \n\tincrement-value-block block value"
-                        + " \n\tdecrement-value-block block value"
-                        + " \n"
-                        + " \n\tread-sector sector"
-                        + " \n\tread-sector-string sector"
-                        + " \n\tread-sector-info sector"
-                        + " \n\twrite-sector sector data"
-                        + " \n\twrite-sector-string sector data"
-                        + " \n\tclear-sector sector"
-                        + " \n"
-                        + " \n\tread-sector-trailer sector"
-                        + " \n\twrite-sector-trailer sector data"
-                        + " \n"
-                        + " \n\tread-card-info\n");
-
-                System.out.println("Examples:"
-                        + "\n\tmcrw a 08429a71b536"
-                        + " write-block 4 4578616d706c6520537472696e670000"
-
-                        + "\n\tmcrw b 05c4f163e7d2"
-                        + " write-block-string 5 \"Example String\""
-
-                        + "\n\tmcrw b 05c4f163e7d2"
-                        + " increment-value-block 6 10");
-                return;
-            }
-
-            int keyAB = 0;
-
-            switch (args[0]) {
-                case "a":
-                    keyAB = KEY_A;
-                    break;
-
-                case "b":
-                    keyAB = KEY_B;
-                    break;
-
-                default:
-                    throw new MifareClassicCardException("Invalid Key: " + args[0]);
-            }
-
-            String key = args[1];
-
-            if (key.length() != 12) {
-                throw new MifareClassicCardException("Invalid Key Length: " + key.length());
-            }
-
-            CardTerminal terminalLocal = TerminalFactory.getDefault().terminals().list().get(0);
-
-            MifareClassicReaderWriter device = new MifareClassicReaderWriter(terminalLocal);
-            device.readCard();
-            device.loadKey(keyAB, key);
-
-            String action = args[2];
-            int block;
-            int sector;
-            int value;
-            String data;
-
-            switch (action) {
-                case "read-block":
-                    block = Integer.parseInt(args[3]);
-                    System.out.println(device.readBlockHexString(block));
-                    break;
-
-                case "read-block-string":
-                    block = Integer.parseInt(args[3]);
-                    System.out.println(device.readBlockString(block));
-                    break;
-
-                case "write-block":
-                    block = Integer.parseInt(args[3]);
-                    data = device.readData(args);
-                    device.writeBlockHexString(block, data);
-                    break;
-
-                case "write-block-string":
-                    block = Integer.parseInt(args[3]);
-                    data = device.readData(args);
-                    device.writeBlockString(block, data);
-                    break;
-
-                case "clear-block":
-                    block = Integer.parseInt(args[3]);
-                    device.clearBlock(block);
-                    break;
-
-                case "format-value-block":
-                    block = Integer.parseInt(args[3]);
-                    device.formatValueBlock(block);
-                    break;
-
-                case "read-value-block":
-                    block = Integer.parseInt(args[3]);
-                    System.out.println(device.readValueBlock(block));
-                    break;
-
-                case "increment-value-block":
-                    block = Integer.parseInt(args[3]);
-                    value = Integer.parseInt(args[4]);
-                    device.incrementValueBlock(block, value);
-                    break;
-
-                case "decrement-value-block":
-                    block = Integer.parseInt(args[3]);
-                    value = Integer.parseInt(args[4]);
-                    device.decrementValueBlock(block, value);
-                    break;
-
-                case "read-sector":
-                    sector = Integer.parseInt(args[3]);
-                    System.out.println(device.readSectorHexString(sector));
-                    break;
-
-                case "read-sector-string":
-                    sector = Integer.parseInt(args[3]);
-                    System.out.println(device.readSectorString(sector));
-                    break;
-
-                case "read-sector-info":
-                    sector = Integer.parseInt(args[3]);
-                    System.out.print(device.readSectorInfo(sector));
-                    break;
-
-                case "write-sector":
-                    sector = Integer.parseInt(args[3]);
-                    data = device.readData(args);
-                    device.writeSectorHexString(sector, data);
-                    break;
-
-                case "write-sector-string":
-                    sector = Integer.parseInt(args[3]);
-                    data = device.readData(args);
-                    device.writeSectorString(sector, data);
-                    break;
-
-                case "clear-sector":
-                    sector = Integer.parseInt(args[3]);
-                    device.clearSector(sector);
-                    break;
-
-                case "read-sector-trailer":
-                    sector = Integer.parseInt(args[3]);
-                    System.out.println(device.readSectorTrailer(sector));
-                    break;
-
-                case "write-sector-trailer":
-                    sector = Integer.parseInt(args[3]);
-                    data = device.readData(args);
-                    device.writeSectorTrailer(sector, data);
-                    break;
-
-                case "read-card-info":
-                    System.out.print(device.readCardInfo());
-                    break;
-
-                default:
-                    throw new MifareClassicCardException("Invalid Action: " + action);
-            }
-
-            device.disconnect();
-
-        } catch(Exception e) {
-            System.err.println("Error: " + e.getMessage());
-        }
-    }
+//    public static void main(String[] args) {
+//        try {
+//
+//            if (args.length == 0) {
+//                System.out.println("Usage:"
+//                        + "\n\tmcrw a|b key action block|sector"
+//                        + " data|value"
+//
+//                        + "\n\techo $data | mcrw a|b"
+//                        + " key action block|sector\n");
+//
+//                System.out.println("Actions:"
+//                        + " \n\tread-block block"
+//                        + " \n\tread-block-string block"
+//                        + " \n\twrite-block block data"
+//                        + " \n\twrite-block-string block data"
+//                        + " \n\tclear-block block"
+//                        + " \n"
+//                        + " \n\tformat-value-block block"
+//                        + " \n\tread-value-block block"
+//                        + " \n\tincrement-value-block block value"
+//                        + " \n\tdecrement-value-block block value"
+//                        + " \n"
+//                        + " \n\tread-sector sector"
+//                        + " \n\tread-sector-string sector"
+//                        + " \n\tread-sector-info sector"
+//                        + " \n\twrite-sector sector data"
+//                        + " \n\twrite-sector-string sector data"
+//                        + " \n\tclear-sector sector"
+//                        + " \n"
+//                        + " \n\tread-sector-trailer sector"
+//                        + " \n\twrite-sector-trailer sector data"
+//                        + " \n"
+//                        + " \n\tread-card-info\n");
+//
+//                System.out.println("Examples:"
+//                        + "\n\tmcrw a 08429a71b536"
+//                        + " write-block 4 4578616d706c6520537472696e670000"
+//
+//                        + "\n\tmcrw b 05c4f163e7d2"
+//                        + " write-block-string 5 \"Example String\""
+//
+//                        + "\n\tmcrw b 05c4f163e7d2"
+//                        + " increment-value-block 6 10");
+//                return;
+//            }
+//
+//            int keyAB = 0;
+//
+//            switch (args[0]) {
+//                case "a":
+//                    keyAB = KEY_A;
+//                    break;
+//
+//                case "b":
+//                    keyAB = KEY_B;
+//                    break;
+//
+//                default:
+//                    throw new MifareClassicCardException("Invalid Key: " + args[0]);
+//            }
+//
+//            String key = args[1];
+//
+//            if (key.length() != 12) {
+//                throw new MifareClassicCardException("Invalid Key Length: " + key.length());
+//            }
+//
+//            MifareClassicReaderWriter device = new MifareClassicReaderWriter();
+//            device.readCard();
+//            device.loadKey(keyAB, key);
+//
+//            String action = args[2];
+//            int block;
+//            int sector;
+//            int value;
+//            String data;
+//
+//            switch (action) {
+//                case "read-block":
+//                    block = Integer.parseInt(args[3]);
+//                    System.out.println(device.readBlockHexString(block));
+//                    break;
+//
+//                case "read-block-string":
+//                    block = Integer.parseInt(args[3]);
+//                    System.out.println(device.readBlockString(block));
+//                    break;
+//
+//                case "write-block":
+//                    block = Integer.parseInt(args[3]);
+//                    data = device.readData(args);
+//                    device.writeBlockHexString(block, data);
+//                    break;
+//
+//                case "write-block-string":
+//                    block = Integer.parseInt(args[3]);
+//                    data = device.readData(args);
+//                    device.writeBlockString(block, data);
+//                    break;
+//
+//                case "clear-block":
+//                    block = Integer.parseInt(args[3]);
+//                    device.clearBlock(block);
+//                    break;
+//
+//                case "format-value-block":
+//                    block = Integer.parseInt(args[3]);
+//                    device.formatValueBlock(block);
+//                    break;
+//
+//                case "read-value-block":
+//                    block = Integer.parseInt(args[3]);
+//                    System.out.println(device.readValueBlock(block));
+//                    break;
+//
+//                case "increment-value-block":
+//                    block = Integer.parseInt(args[3]);
+//                    value = Integer.parseInt(args[4]);
+//                    device.incrementValueBlock(block, value);
+//                    break;
+//
+//                case "decrement-value-block":
+//                    block = Integer.parseInt(args[3]);
+//                    value = Integer.parseInt(args[4]);
+//                    device.decrementValueBlock(block, value);
+//                    break;
+//
+//                case "read-sector":
+//                    sector = Integer.parseInt(args[3]);
+//                    System.out.println(device.readSectorHexString(sector));
+//                    break;
+//
+//                case "read-sector-string":
+//                    sector = Integer.parseInt(args[3]);
+//                    System.out.println(device.readSectorString(sector));
+//                    break;
+//
+//                case "read-sector-info":
+//                    sector = Integer.parseInt(args[3]);
+//                    System.out.print(device.readSectorInfo(sector));
+//                    break;
+//
+//                case "write-sector":
+//                    sector = Integer.parseInt(args[3]);
+//                    data = device.readData(args);
+//                    device.writeSectorHexString(sector, data);
+//                    break;
+//
+//                case "write-sector-string":
+//                    sector = Integer.parseInt(args[3]);
+//                    data = device.readData(args);
+//                    device.writeSectorString(sector, data);
+//                    break;
+//
+//                case "clear-sector":
+//                    sector = Integer.parseInt(args[3]);
+//                    device.clearSector(sector);
+//                    break;
+//
+//                case "read-sector-trailer":
+//                    sector = Integer.parseInt(args[3]);
+//                    System.out.println(device.readSectorTrailer(sector));
+//                    break;
+//
+//                case "write-sector-trailer":
+//                    sector = Integer.parseInt(args[3]);
+//                    data = device.readData(args);
+//                    device.writeSectorTrailer(sector, data);
+//                    break;
+//
+//                case "read-card-info":
+//                    System.out.print(device.readCardInfo());
+//                    break;
+//
+//                default:
+//                    throw new MifareClassicCardException("Invalid Action: " + action);
+//            }
+//
+//            device.disconnect();
+//
+//        } catch(Exception e) {
+//            System.err.println("Error: " + e.getMessage());
+//        }
+//    }
 
     public class Sector {
         protected int number;

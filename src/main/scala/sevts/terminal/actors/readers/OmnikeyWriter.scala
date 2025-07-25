@@ -2,16 +2,14 @@ package sevts.terminal.actors.readers
 
 import com.cuadernoinformatica.nfc.MifareClassicReaderWriter
 import com.typesafe.scalalogging.LazyLogging
-import sun.jvm.hotspot.HelloWorld.e
 
-import javax.smartcardio.{Card, CardException, CardTerminal}
+import javax.smartcardio.{CardException, CardTerminal}
 import scala.concurrent.blocking
 import scala.util.control.NonFatal
 
 object OmnikeyWriter extends LazyLogging {
 
   private val DefaultKeyHex = "ffffffffffff"
-
 
   def writeUserData(terminal: CardTerminal,
                     sector: Int,
@@ -21,7 +19,7 @@ object OmnikeyWriter extends LazyLogging {
                    ): Option[Boolean] = {
     try {
       blocking {
-        val mcrw = new MifareClassicReaderWriter(terminal)
+        val mcrw = new McrwWithTerminal(terminal)
 
         // библиотека сама подождёт/подключится через readCard(), используя переданный терминал
         logger.info(s"readCard... ")
@@ -75,4 +73,8 @@ object OmnikeyWriter extends LazyLogging {
     if (sector < 32) sector * 4 + blockInSector
     else 32 * 4 + (sector - 32) * 16 + blockInSector
   }
+}
+
+class McrwWithTerminal(private val term: CardTerminal) extends MifareClassicReaderWriter {
+  override def getTerminal(): CardTerminal = term
 }
