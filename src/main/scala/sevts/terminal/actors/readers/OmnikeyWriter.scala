@@ -23,8 +23,6 @@ object OmnikeyWriter extends LazyLogging {
       blocking {
         val mcrw = new MifareClassicReaderWriter(terminal)
 
-        logger.info(s"readCardInfo: ${mcrw.readCardInfo()}")
-
         // библиотека сама подождёт/подключится через readCard(), используя переданный терминал
         logger.info(s"readCard... ")
         mcrw.readCard()
@@ -32,6 +30,8 @@ object OmnikeyWriter extends LazyLogging {
         val keyType = if (useKeyA) MifareClassicReaderWriter.KEY_A else MifareClassicReaderWriter.KEY_B
         logger.info(s"loading key... keyType: $keyType")
         mcrw.loadKey(keyType, keyHex)
+
+        logger.info(s"readCardInfo: ${mcrw.readCardInfo()}")
 
         logger.info(s"writeSectorString... sector: $sector, data: $data")
         mcrw.writeSectorString(sector, data)
@@ -46,8 +46,8 @@ object OmnikeyWriter extends LazyLogging {
       case e: CardException =>
         logger.error(s"CardException: ${e.getMessage}")
         None
-      case NonFatal(_) =>
-        logger.error("NonFatal error")
+      case NonFatal(e) =>
+        logger.error(s"NonFatal error e: ${e.getMessage}")
         None
     }
   }
