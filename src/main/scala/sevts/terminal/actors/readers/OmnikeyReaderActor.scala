@@ -41,7 +41,8 @@ object OmnikeyReaderActor {
 class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
   extends Actor
     with LazyLogging
-    with SmartCardOperations {
+    //with SmartCardOperations
+    {
 
   import OmnikeyReaderActor._
 
