@@ -167,7 +167,7 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
                                       startBlock: Int,
                                       payload: Array[Byte],
                                       key: Array[Byte] = Array.fill(6)(0xFF.toByte), // default Key A
-                                      useKeyA: Boolean = true
+                                       useKeyA: Boolean = true
                                      ): Option[Int] = {
     try {
       blocking {
@@ -188,7 +188,7 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
             if (isTrailerBlock(block)) {
               logger.warn(s"Skip trailer block $block")
             } else {
-              authenticate(card, block.toByte, useKeyA, 0x00.toByte)
+              authenticateClassic(card, block.toByte, useKeyA, 0x00.toByte)
               val data16 =
                 if (chunks(i).length == 16) chunks(i).toArray
                 else chunks(i).padTo(16, 0.toByte).toArray
@@ -226,8 +226,7 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
     if (resp.getSW != 0x9000) throw new CardException(f"$msg, SW=${resp.getSW}%04X")
   }
 
-  // FF 86 00 00 05 01 00 <block> <keyType> <slot>
-  private def authenticate(card: Card, block: Byte, keyTypeA: Boolean, slot: Byte): Unit = {
+  protected def authenticate(card: Card, block: Byte, keyTypeA: Boolean, slot: Byte): Unit = {
     val keyType: Byte = if (keyTypeA) 0x60.toByte else 0x61.toByte
     val apdu = Array[Byte](
       0xFF.toByte, 0x86.toByte, 0x00, 0x00, 0x05,
@@ -237,6 +236,25 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
     check(resp, s"AUTH block=$block failed")
   }
 
+  /** Fallback short authenticate (FF 88), used when FF 86 fails with 6982/6986 */
+  protected def authenticateFF88(card: Card, block: Byte, keyTypeA: Boolean, slot: Byte): Unit = {
+    val keyType: Byte = if (keyTypeA) 0x60.toByte else 0x61.toByte
+    val apdu = Array[Byte](0xFF.toByte, 0x88.toByte, 0x00, block, keyType, slot)
+    val resp = transmit(card, apdu)
+    check(resp, s"AUTH (FF88) block=$block failed")
+  }
+
+  /** Try FF 86 first, then fallback to FF 88 if needed */
+  protected def authenticateClassic(card: Card, block: Byte, keyTypeA: Boolean, slot: Byte): Unit = {
+    try {
+      authenticate(card, block, keyTypeA, slot)
+    } catch {
+      case e: CardException =>
+        logger.warn(s"AUTH (FF86) failed for block=$block: ${e.getMessage}; fallback to FF88")
+        authenticateFF88(card, block, keyTypeA, slot)
+    }
+  }
+
   // FF D6 00 <block> 10 <16 bytes>
   private def writeBlock(card: Card, block: Byte, data16: Array[Byte]): Unit = {
     require(data16.length == 16, "MIFARE Classic block size = 16 bytes")
@@ -244,7 +262,6 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
     val resp = transmit(card, apdu)
     check(resp, s"WRITE block=$block failed")
   }
-
 
   /**
    * High-level LOAD KEY that is friendly to HID OMNIKEY:
