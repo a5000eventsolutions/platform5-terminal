@@ -158,6 +158,14 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
     barray.map(b => b & 0xff)
   }
 
+  // ---- PATCH: loadKey с p1 и fallback ----
+  protected def loadKey(card: Card, key: Array[Byte], slot: Byte, p1: Byte): Unit = {
+    // FF 82 <p1:key structure> <slot> 06 <key>
+    val apdu = Array[Byte](0xFF.toByte, 0x82.toByte, p1, slot, 0x06) ++ key
+    val resp = transmit(card, apdu)
+    check(resp, f"LOAD KEY failed (p1=0x$p1%02X, slot=$slot)")
+  }
+
 
   protected def tryWriteMifareClassic(terminal: CardTerminal,
                                       startBlock: Int,
@@ -173,6 +181,7 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
         val card: Card = terminal.connect("*")
 
         try {
+          // ВАЖНО: для HID OMNIKEY сперва пробуем p1 = 0x20, потом 0x00 (делает MifareClassicKeyOps.loadKey)
           loadKey(card, key, 0x00.toByte)
 
           val chunks = payload.grouped(16).toIndexedSeq
@@ -185,28 +194,30 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
             } else {
               authenticate(card, block.toByte, useKeyA, 0x00.toByte)
               val data16 =
-                if (chunks(i).length == 16) chunks(i)
-                else chunks(i).padTo(16, 0.toByte)
-              writeBlock(card, block.toByte, data16.toArray)
+                if (chunks(i).length == 16) chunks(i).toArray
+                else chunks(i).padTo(16, 0.toByte).toArray
+              writeBlock(card, block.toByte, data16)
               written += 1
             }
           }
 
           Some(written)
+        } catch {
+          case e: CardException =>
+            logger.error("MIFARE Classic write failed", e)
+            None
+          case NonFatal(e) =>
+            logger.error("MIFARE Classic write failed (non-fatal)", e)
+            None
         } finally {
           try card.disconnect(false) catch {
-            case _: Throwable =>
+            case _: Throwable => ()
           }
         }
       }
     } catch {
-      case e: CardException =>
-        logger.error(e.getMessage, e)
-        self ! Command.ReconnectCard
-        None
-      case e: Throwable if NonFatal(e) =>
-        logger.error(e.getMessage, e)
-        self ! Command.ReconnectCard
+      case NonFatal(e) =>
+        logger.error("tryWriteMifareClassic: unexpected error", e)
         None
     }
   }
