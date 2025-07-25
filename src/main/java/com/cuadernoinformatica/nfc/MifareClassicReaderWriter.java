@@ -445,6 +445,44 @@ public abstract class MifareClassicReaderWriter {
         card.disconnect(false);
     }
 
+    public class Sector {
+        protected int number;
+        protected int startBlock;
+        protected int blocksNumber;
+
+        public Sector(int number) {
+            this.number = number;
+
+            if (number < 32) {
+                startBlock = number * 4;
+                blocksNumber = 4;
+            } else {
+                startBlock = 128 + (number - 32) * 16;
+                blocksNumber = 16;
+            }
+        }
+
+        public int getNumber() {
+            return number;
+        }
+
+        public int getStartBlock() {
+            return startBlock;
+        }
+
+        public int getBlocksNumber() {
+            return blocksNumber;
+        }
+
+        public int getDataBlocksNumber() {
+            return blocksNumber - 1;
+        }
+
+        public int getSectorTrailer() {
+            return startBlock + blocksNumber - 1;
+        }
+    }
+
 //    public static void main(String[] args) {
 //        try {
 //
@@ -630,42 +668,4 @@ public abstract class MifareClassicReaderWriter {
 //            System.err.println("Error: " + e.getMessage());
 //        }
 //    }
-
-    public class Sector {
-        protected int number;
-        protected int startBlock;
-        protected int blocksNumber;
-
-        public Sector(int number) {
-            this.number = number;
-
-            if (number < 32) {
-                startBlock = number * 4;
-                blocksNumber = 4;
-            } else {
-                startBlock = 128 + (number - 32) * 16;
-                blocksNumber = 16;
-            }
-        }
-
-        public int getNumber() {
-            return number;
-        }
-
-        public int getStartBlock() {
-            return startBlock;
-        }
-
-        public int getBlocksNumber() {
-            return blocksNumber;
-        }
-
-        public int getDataBlocksNumber() {
-            return blocksNumber - 1;
-        }
-
-        public int getSectorTrailer() {
-            return startBlock + blocksNumber - 1;
-        }
-    }
 }

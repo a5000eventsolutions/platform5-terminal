@@ -50,29 +50,6 @@ object OmnikeyWriter extends LazyLogging {
     }
   }
 
-  // ---------------- helpers ----------------
-
-  private def padTo16(bytes: Array[Byte]): Array[Byte] = {
-    if (bytes.length == 16) bytes
-    else {
-      val arr = Array.fill[Byte](16)(0x00.toByte)
-      System.arraycopy(bytes, 0, arr, 0, math.min(bytes.length, 16))
-      arr
-    }
-  }
-
-  private def toHex(bytes: Array[Byte]): String =
-    bytes.map("%02x".format(_)).mkString
-
-  /**
-   * Абсолютный номер блока для MIFARE Classic 1K/4K.
-   * Первые 32 сектора по 4 блока, далее по 16 блоков на сектор.
-   */
-  private def toAbsoluteBlock(sector: Int, blockInSector: Int): Int = {
-    require(blockInSector >= 0, "blockInSector must be >= 0")
-    if (sector < 32) sector * 4 + blockInSector
-    else 32 * 4 + (sector - 32) * 16 + blockInSector
-  }
 }
 
 class McrwWithTerminal(private val term: CardTerminal) extends MifareClassicReaderWriter {

@@ -83,9 +83,13 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
       }
 
     case Command.WriteCard(terminal) =>
-      val payload = "http://yandfex.ru".getBytes("UTF-8")
-      OmnikeyWriter.writeUserData(terminal, 1, payload.mkString).foreach { _ =>
-        logger.info(s"Write payload ${payload.mkString(" ")} ok")
+//      val payload = "http://yandfex.ru".getBytes("UTF-8")
+//      OmnikeyWriter.writeUserData(terminal, 1, payload.mkString).foreach { _ =>
+//        logger.info(s"Write payload ${payload.mkString(" ")} ok")
+//        context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
+//      }
+      tryReadBlockViaPcsc(terminal, 1).foreach { result =>
+        logger.info(s"Read block 1: $result")
         context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
       }
 
@@ -156,6 +160,78 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
 
   def bytearray2intarray(barray: Array[Byte]) = {
     barray.map(b => b & 0xff)
+  }
+
+  protected def tryReadBlockViaPcsc(terminal: CardTerminal,
+                                    block: Int = 8,
+                                    keyHex: String = "ffffffffffff",
+                                    useKeyA: Boolean = true,
+                                    keySlot: Byte = 0x00.toByte
+                                   ): Option[Array[Byte]] = {
+
+    def ensureOk(resp: ResponseAPDU, what: String): Unit = {
+      val sw = resp.getSW
+      if (sw != 0x9000) {
+        val hex = bytArrayToHex(resp.getBytes)
+        throw new CardException(s"$what failed, SW=${sw.toHexString.toUpperCase}, resp=$hex")
+      }
+    }
+
+    def hexToBytes(hex: String): Array[Byte] = {
+      hex.grouped(2).map(Integer.parseInt(_, 16).toByte).toArray
+    }
+
+    try {
+      blocking {
+        if (!terminal.waitForCardPresent(0)) return None
+
+        logger.info("RFID card found...")
+        val card = terminal.connect("*")
+        val ch = card.getBasicChannel
+
+        // 0) (Эквивалент REQA/anti-collision) Получим UID карты
+        val getUid = new CommandAPDU(Array[Byte](0xFF.toByte, 0xCA.toByte, 0x00, 0x00, 0x00))
+        val uidResp = ch.transmit(getUid)
+        ensureOk(uidResp, "Get UID")
+        val uid = uidResp.getData
+        logger.info(s"UID: ${bytArrayToHex(uid)}")
+
+        // 1) Загрузим ключ в ридер (FF 82 00 <slot> 06 <6-byte key>)
+        val key = hexToBytes(keyHex)
+        require(key.length == 6, s"Key must be 6 bytes (12 hex chars), got ${key.length}")
+        val loadKey = new CommandAPDU(Array[Byte](0xFF.toByte, 0x82.toByte, 0x00, keySlot, 0x06.toByte) ++ key)
+        val loadKeyResp = ch.transmit(loadKey)
+        ensureOk(loadKeyResp, "Load key")
+
+        // 2) Аутентификация к нужному блоку (FF 86 00 00 05 01 00 <block> <keyType> <slot>)
+        val keyType: Byte = if (useKeyA) 0x60.toByte else 0x61.toByte
+        val authApdu = new CommandAPDU(Array[Byte](
+          0xFF.toByte, 0x86.toByte, 0x00, 0x00, 0x05,
+          0x01, 0x00, block.toByte, keyType, keySlot
+        ))
+        val authResp = ch.transmit(authApdu)
+        ensureOk(authResp, s"Auth block $block")
+
+        // 3) Читаем блок (FF B0 00 <block> 10)
+        val readApdu = new CommandAPDU(Array[Byte](0xFF.toByte, 0xB0.toByte, 0x00, block.toByte, 0x10.toByte))
+        val readResp = ch.transmit(readApdu)
+        ensureOk(readResp, s"Read block $block")
+        val data = readResp.getData
+
+        logger.info(s"Read block $block: ${bytArrayToHex(data)}")
+
+        Some(data)
+      }
+    } catch {
+      case e: CardException =>
+        logger.error(e.getMessage, e)
+        self ! Command.ReconnectCard
+        None
+      case NonFatal(e) =>
+        logger.error(e.getMessage, e)
+        self ! Command.ReconnectCard
+        None
+    }
   }
 
 }
