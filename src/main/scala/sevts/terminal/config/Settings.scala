@@ -10,7 +10,7 @@ import sevts.server.domain.{Id, Organisation}
 import sevts.server.remote.Reaction
 import sevts.terminal.config.Settings._
 
-import scala.concurrent.duration.{Duration, TimeUnit}
+import scala.concurrent.duration.{Duration, FiniteDuration, TimeUnit}
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
@@ -273,7 +273,7 @@ object Settings {
         enterChannelNum = config.getInt("enterChannelNum"),
         exitChannelNum = config.getInt("exitChannelNum"),
 
-        closeTime = Duration.create(config.getDuration("closeTime").toMillis, TimeUnit.MILLISECONDS),
+        closeTime = FiniteDuration(config.getDuration("closeTime").toMillis, TimeUnit.MILLISECONDS),
         dllPath = config.getString("dllPath")
       )
     }
@@ -288,7 +288,7 @@ object Settings {
                             enterChannelNum: Int,
                             exitChannelNum: Int,
 
-                            closeTime: Duration,
+                            closeTime: FiniteDuration,
                             dllPath: String
                            )
 

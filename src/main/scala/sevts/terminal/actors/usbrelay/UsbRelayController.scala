@@ -88,7 +88,7 @@ class UsbRelayController(injector: Injector) extends LazyLogging {
     result match {
       case 0 =>
         logger.info(s"Channel ${index} is opened")
-        injector.system.scheduler.scheduleOnce(1 second){
+        injector.system.scheduler.scheduleOnce(settings.closeTime){
           setChannelState(channel, false)
           closeChannel(h, index)
         }
