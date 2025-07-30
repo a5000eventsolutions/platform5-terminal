@@ -27,7 +27,6 @@ object OmnikeyReaderActor {
     //case class DataReceived(port: SerialPort) extends Command
     case class StartTerminalRead(terminal: CardTerminal) extends Command
     case class ReadCard(terminal: CardTerminal) extends Command
-    case class WriteCard(terminal: CardTerminal) extends Command
     case object ReconnectCard extends Command
   }
 
@@ -91,13 +90,16 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
       tryReadCard(terminal).foreach { result =>
         logger.info(s"Read value: $result")
         listener ! ReadersActor.DeviceEvent.DataReceived(device.name, result.stripSuffix("9000"))
-        context.system.scheduler.scheduleOnce(delay, self, Command.WriteCard(terminal))
+        context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
       }
 
     case Command.ReconnectCard =>
       context.system.eventStream.unsubscribe(self, classOf[ServerMessage])
       context.become(receive)
       self ! Command.ReconnectCard
+
+    case msg =>
+      logger.error(s"Unknown message received ${msg.toString}")
   }
 
 
@@ -116,8 +118,11 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
       context.become(ready(terminal))
       context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
 
+    case msg: ServerMessage =>
+      logger.info(s"ServerMessage received in base state: ${msg}")
+
     case msg =>
-      logger.error("Unknown message received ${msg.toString}")
+      logger.error(s"Unknown message received ${msg.toString}")
   }
 
 
