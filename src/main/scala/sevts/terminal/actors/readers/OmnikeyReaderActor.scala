@@ -53,7 +53,8 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
 
   val portName = device.parameters.getString("portName")
   val delay = Duration(device.parameters.getInt("delay"), TimeUnit.MILLISECONDS)
-  val writeAttemptDelay = Duration(device.parameters.getInt("writeAttemptDelay"), TimeUnit.MILLISECONDS)
+  val writeCardTimeout = Duration(device.parameters.getInt("writeCardTimeout"), TimeUnit.MILLISECONDS)
+  val writeAttempts = writeCardTimeout.toMillis / delay.toMillis
 
 
   override def preStart = {
@@ -73,7 +74,7 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
       msg.msg match {
         case data: WriteRfidUserMemoryEvent =>
           logger.info(s"Omnikey: Write user memory event ${data.value}")
-          writeCard(terminal, data.value, 10) match {
+          writeCard(terminal, data.value, writeAttempts.toInt) match {
             case Some(true) =>
               //sender() ! WriteOk
               context.system.eventStream.unsubscribe(self, classOf[ServerMessage])
@@ -190,7 +191,7 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
         case Some(true) => result
         case _ =>
           logger.error(s"Write nfc error for data: $data, retrying...")
-          Thread.sleep(writeAttemptDelay.toMillis)
+          Thread.sleep(delay.toMillis)
           writeCard(terminal, data, counter - 1)
       }
     } else {
