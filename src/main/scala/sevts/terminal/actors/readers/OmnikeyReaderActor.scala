@@ -81,7 +81,6 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
             case Some(true) =>
               audio.playComplete()
               listener ! ReadersActor.DeviceEvent.WriteSuccess(device.name)
-              context.system.eventStream.unsubscribe(self, classOf[ServerMessage])
               self ! Command.ReadCard(terminal)
 
             case _ =>
@@ -90,7 +89,6 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
                 device.name,
                 s"Failed to write after ${writeAttempts} attempts"
               )
-              context.system.eventStream.unsubscribe(self, classOf[ServerMessage])
               self ! Command.ReconnectCard
           }
 
