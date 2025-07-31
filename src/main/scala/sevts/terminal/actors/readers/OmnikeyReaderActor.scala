@@ -7,7 +7,6 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.typesafe.scalalogging.LazyLogging
 import sevts.remote.protocol.Protocol.ServerMessage
 import sevts.server.protocol.TerminalEvent.WriteRfidUserMemoryEvent
-import sevts.terminal.actors.readers.OmnikeyWriteReaderActor.{IdleData, WaitCard}
 import sevts.terminal.actors.readers.Rfid9809ReaderActor.ComPort
 import sevts.terminal.config.Settings.DeviceConfig
 
