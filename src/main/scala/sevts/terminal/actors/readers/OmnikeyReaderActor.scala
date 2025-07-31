@@ -7,7 +7,6 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.typesafe.scalalogging.LazyLogging
 import sevts.remote.protocol.Protocol.ServerMessage
 import sevts.server.protocol.TerminalEvent.WriteRfidUserMemoryEvent
-import sevts.terminal.actors.readers.Rfid9809ReaderActor.ComPort
 import sevts.terminal.config.Settings.DeviceConfig
 
 import java.nio.{ByteBuffer, IntBuffer}
@@ -76,11 +75,14 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
           logger.info(s"Omnikey: Write user memory event ${data.value}")
           writeCard(terminal, data.value, writeAttempts.toInt) match {
             case Some(true) =>
-              //sender() ! WriteOk
+              listener ! ReadersActor.DeviceEvent.WriteSuccess(device.name)
               context.system.eventStream.unsubscribe(self, classOf[ServerMessage])
               context.become(receive)
             case _ =>
-              //sender() ! WriteError
+              listener ! ReadersActor.DeviceEvent.WriteFailure(
+                device.name,
+                s"Failed to write after ${writeAttempts} attempts"
+              )
               context.system.eventStream.unsubscribe(self, classOf[ServerMessage])
               context.become(receive)
           }

@@ -22,6 +22,8 @@ object ReadersActor {
     case class DataReceived(deviceName: String, data: String) extends Request
     case class EPCReceived(deviceName: String, data: Array[Byte]) extends Request
     case class Stopped(deviceName: String) extends Request
+    case class WriteSuccess(deviceName: String) extends DeviceEvent
+    case class WriteFailure(deviceName: String, error: String) extends DeviceEvent
   }
 
   sealed trait Request
@@ -107,6 +109,16 @@ case class ReadersActor(settings: Settings, injector: Injector) extends Actor wi
       }
 
     case e: DeviceEvent.EPCReceived =>
+      listeners foreach { listener =>
+        listener ! e
+      }
+
+    case e: DeviceEvent.WriteSuccess =>
+      listeners foreach { listener =>
+        listener ! e
+      }
+
+    case e: DeviceEvent.WriteFailure =>
       listeners foreach { listener =>
         listener ! e
       }

@@ -1,7 +1,6 @@
 package sevts.terminal.platform5
 
 import java.time.Instant
-
 import akka.actor._
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
@@ -16,6 +15,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.control.NonFatal
 import akka.pattern._
+import sevts.server.protocol.TerminalEvent
 import sevts.terminal.networking.websocket.WsClient.WSException
 
 
@@ -237,6 +237,17 @@ class RemoteTransportActor(injector: Injector) extends FSM[State, Data] with Laz
       } else {
         stay()
       }
+
+    case Event(_: ReadersActor.DeviceEvent.WriteSuccess, workData: Data.Working) =>
+      workData.wsClient ! TerminalMessage(workData.uid,
+        TerminalEvent.WriteRfidComplete(workData.id))
+      stay()
+
+    case Event(wf: ReadersActor.DeviceEvent.WriteFailure, workData: Data.Working) =>
+      workData.wsClient ! TerminalMessage(workData.uid,
+        TerminalEvent.WriteRfidError(workData.id, wf.error))
+      stay()
+
 
     case Event(Terminated(actor), _) =>
       logger.error("Terminal worker is down")
