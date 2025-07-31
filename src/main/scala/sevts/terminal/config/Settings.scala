@@ -176,14 +176,16 @@ object Settings {
       def apply(config: Config): BrowserMonitor = {
         BrowserMonitor(
           name = config.getString("name"),
-          position = config.getString("position")
+          position = config.getString("position"),
+          chromiumPath = Option(config.getString("chromiumPath")).getOrElse("chrome")
         )
       }
     }
 
     case class BrowserMonitor(
                                name: String,
-                               position: String)
+                               position: String,
+                               chromiumPath: String)
 
     case class AutoLogin(enabled: Boolean,
                          manuallyUserName: Boolean,
