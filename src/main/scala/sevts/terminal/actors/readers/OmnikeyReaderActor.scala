@@ -7,6 +7,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.typesafe.scalalogging.LazyLogging
 import sevts.remote.protocol.Protocol.ServerMessage
 import sevts.server.protocol.TerminalEvent.WriteRfidUserMemoryEvent
+import sevts.terminal.audio.Audio
 import sevts.terminal.config.Settings.DeviceConfig
 
 import java.nio.{ByteBuffer, IntBuffer}
@@ -50,6 +51,8 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
   implicit val system = context.system
   implicit val ec = context.dispatcher
 
+  private val audio = new Audio()
+
   val portName = device.parameters.getString("portName")
   val delay = Duration(device.parameters.getInt("delay"), TimeUnit.MILLISECONDS)
   val writeCardTimeout = Duration(device.parameters.getInt("writeCardTimeout"), TimeUnit.MILLISECONDS)
@@ -64,6 +67,7 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
 
   override def postStop = {
     context.system.eventStream.unsubscribe(self, classOf[ServerMessage])
+    audio.close()
     logger.error("Actor dead")
   }
 
@@ -75,11 +79,13 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
           logger.info(s"Omnikey: Write user memory event ${data.value}")
           writeCard(terminal, data.value, writeAttempts.toInt) match {
             case Some(true) =>
+              audio.playComplete()
               listener ! ReadersActor.DeviceEvent.WriteSuccess(device.name)
               context.system.eventStream.unsubscribe(self, classOf[ServerMessage])
               self ! Command.ReadCard(terminal)
 
             case _ =>
+              audio.playError()
               listener ! ReadersActor.DeviceEvent.WriteFailure(
                 device.name,
                 s"Failed to write after ${writeAttempts} attempts"
