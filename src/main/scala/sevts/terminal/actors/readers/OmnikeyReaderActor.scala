@@ -93,6 +93,8 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
               context.system.eventStream.unsubscribe(self, classOf[ServerMessage])
               self ! Command.ReconnectCard
           }
+
+        case _ =>
       }
 
     case Command.ReadCard(terminal) =>
