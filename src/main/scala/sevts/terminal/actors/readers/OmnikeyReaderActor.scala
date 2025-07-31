@@ -77,14 +77,15 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
             case Some(true) =>
               listener ! ReadersActor.DeviceEvent.WriteSuccess(device.name)
               context.system.eventStream.unsubscribe(self, classOf[ServerMessage])
-              context.become(receive)
+              self ! Command.ReadCard(terminal)
+
             case _ =>
               listener ! ReadersActor.DeviceEvent.WriteFailure(
                 device.name,
                 s"Failed to write after ${writeAttempts} attempts"
               )
               context.system.eventStream.unsubscribe(self, classOf[ServerMessage])
-              context.become(receive)
+              self ! Command.ReconnectCard
           }
       }
 
