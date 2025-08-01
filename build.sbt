@@ -64,4 +64,4 @@ lazy val terminal = (project in file("./"))
   .dependsOn(coreRef)
   //.dependsOn(pl5Ref)
 
-
+unmanagedJars in Compile += file("lib/")

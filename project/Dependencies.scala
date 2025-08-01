@@ -58,7 +58,11 @@ object Dependencies {
     "com.nativelibs4java" % "jnaerator" % "0.12",
 
     "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.23.0",
-    "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.23.0" % "provided"
+    "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.23.0" % "provided",
+
+//    "org.bouncycastle" % "bcprov-jdk18on" % "1.81",
+//    "org.bouncycastle" % "bcpkix-jdk18on" % "1.81",
+//    "org.bouncycastle" % "bctls-jdk18on" % "1.81"
   ))
 }
 
