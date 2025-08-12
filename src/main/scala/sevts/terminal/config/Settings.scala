@@ -1,7 +1,6 @@
 package sevts.terminal.config
 
 import java.awt.print.PageFormat
-import java.util.Map.Entry
 import java.util.concurrent.TimeUnit
 import com.typesafe.config._
 import com.typesafe.scalalogging.LazyLogging
@@ -15,6 +14,14 @@ import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 object Settings {
+
+  implicit class RichConfig(val config: Config) extends AnyVal {
+    def getOptionalString(path: String): Option[String] =
+      if (config.hasPath(path)) Some(config.getString(path)) else None
+
+    def getOptionalInt(path: String): Option[Int] =
+      if (config.hasPath(path)) Some(config.getInt(path)) else None
+  }
 
   sealed trait DeviceDriverType
   object DeviceDriverType {
@@ -176,14 +183,16 @@ object Settings {
       def apply(config: Config): BrowserMonitor = {
         BrowserMonitor(
           name = config.getString("name"),
-          position = config.getString("position")
+          position = config.getString("position"),
+          chromiumPath = config.getOptionalString("chromiumPath").getOrElse("chrome")
         )
       }
     }
 
     case class BrowserMonitor(
                                name: String,
-                               position: String)
+                               position: String,
+                               chromiumPath: String)
 
     case class AutoLogin(enabled: Boolean,
                          manuallyUserName: Boolean,

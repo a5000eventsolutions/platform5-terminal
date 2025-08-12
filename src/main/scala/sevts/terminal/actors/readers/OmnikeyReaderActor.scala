@@ -5,8 +5,13 @@ import java.util.concurrent.TimeUnit
 import javax.smartcardio._
 import akka.actor.{Actor, ActorRef, Props}
 import com.typesafe.scalalogging.LazyLogging
+import sevts.remote.protocol.Protocol.ServerMessage
+import sevts.server.protocol.TerminalEvent.WriteRfidUserMemoryEvent
+import sevts.terminal.audio.Audio
 import sevts.terminal.config.Settings.DeviceConfig
 
+import java.nio.{ByteBuffer, IntBuffer}
+import scala.annotation.tailrec
 import scala.concurrent.blocking
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -37,24 +42,75 @@ object OmnikeyReaderActor {
 
 }
 
-class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor with LazyLogging {
+class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
+  extends Actor
+    with LazyLogging {
+
   import OmnikeyReaderActor._
 
   implicit val system = context.system
   implicit val ec = context.dispatcher
 
+  private val audio = new Audio()
+
   val portName = device.parameters.getString("portName")
   val delay = Duration(device.parameters.getInt("delay"), TimeUnit.MILLISECONDS)
+  val writeCardTimeout = Duration(device.parameters.getInt("writeCardTimeout"), TimeUnit.MILLISECONDS)
+  val writeAttempts = writeCardTimeout.toMillis / delay.toMillis
 
 
   override def preStart = {
     logger.info("Starting Omnikey reader...")
+    context.system.eventStream.subscribe(self, classOf[ServerMessage])
     connect()
   }
 
   override def postStop = {
+    context.system.eventStream.unsubscribe(self, classOf[ServerMessage])
+    audio.close()
     logger.error("Actor dead")
   }
+
+  def ready(terminal: CardTerminal): Receive = {
+    case msg: ServerMessage =>
+      logger.info(s"ServerMessage: ${msg.msg}")
+      msg.msg match {
+        case data: WriteRfidUserMemoryEvent =>
+          logger.info(s"Omnikey: Write user memory event ${data.value}")
+          writeCard(terminal, data.value, writeAttempts.toInt) match {
+            case Some(true) =>
+              audio.playComplete()
+              listener ! ReadersActor.DeviceEvent.WriteSuccess(device.name)
+              self ! Command.ReadCard(terminal)
+
+            case _ =>
+              audio.playError()
+              listener ! ReadersActor.DeviceEvent.WriteFailure(
+                device.name,
+                s"Failed to write after ${writeAttempts} attempts"
+              )
+              self ! Command.ReconnectCard
+          }
+
+        case _ =>
+      }
+
+    case Command.ReadCard(terminal) =>
+      tryReadCard(terminal).foreach { result =>
+        logger.info(s"Read value: $result")
+        listener ! ReadersActor.DeviceEvent.DataReceived(device.name, result.stripSuffix("9000"))
+        context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
+      }
+
+    case Command.ReconnectCard =>
+      context.system.eventStream.unsubscribe(self, classOf[ServerMessage])
+      context.become(receive)
+      self ! Command.ReconnectCard
+
+    case msg =>
+      logger.error(s"Unknown message received ${msg.toString}")
+  }
+
 
   def receive = {
 
@@ -67,18 +123,17 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor
       }
 
     case Command.StartTerminalRead(terminal: CardTerminal) =>
+      context.system.eventStream.subscribe(self, classOf[ServerMessage])
+      context.become(ready(terminal))
       context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
 
-    case Command.ReadCard(terminal) =>
-      tryReadCard(terminal).foreach { result =>
-        logger.info(s"Read value: $result")
-        listener ! ReadersActor.DeviceEvent.DataReceived(device.name, result.stripSuffix("9000"))
-        context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
-      }
+    case msg: ServerMessage =>
+      logger.info(s"ServerMessage received in base state: ${msg}")
 
     case msg =>
-      logger.error("Unknown message received ${msg.toString}")
+      logger.error(s"Unknown message received ${msg.toString}")
   }
+
 
   private def connect() = {
     import scala.jdk.CollectionConverters._
@@ -137,6 +192,22 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor
     }
   }
 
+  @tailrec
+  private def writeCard(terminal: CardTerminal, data: String, counter: Int): Option[Boolean] = {
+    if (counter > 0) {
+      val result = OmnikeyWriter.writeUrlNdefAuto(terminal, data)
+      result match {
+        case Some(true) => result
+        case _ =>
+          logger.error(s"Write nfc error for data: $data, retrying...")
+          Thread.sleep(delay.toMillis)
+          writeCard(terminal, data, counter - 1)
+      }
+    } else {
+      None
+    }
+  }
+
   private def bytArrayToHex(a: Array[Byte]): String = {
     a.map("%02X" format _).mkString
   }
@@ -144,4 +215,5 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig) extends Actor
   def bytearray2intarray(barray: Array[Byte]) = {
     barray.map(b => b & 0xff)
   }
+
 }
