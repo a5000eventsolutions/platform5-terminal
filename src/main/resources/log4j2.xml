@@ -18,7 +18,7 @@
     </Appenders>
     <Loggers>
 
-        <AsyncRoot level="INFO">
+        <AsyncRoot level="DEBUG">
             <AppenderRef ref="Console" />
             <AppenderRef ref="FileAppender" />
         </AsyncRoot>
@@ -27,6 +27,7 @@
         <Logger name="org.apache.commons.digester3.Digester" level="info"/>
         <Logger name="scala.slick" level="INFO"/>
         <Logger name="slick.jdbc" level="INFO"/>
+        <Logger name="ru.CryptoPro" level="DEBUG"/>
 
     </Loggers>
 </Configuration>

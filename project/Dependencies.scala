@@ -6,7 +6,7 @@ object Dependencies {
     val scala = "2.13.11"
     val platform5 = "1.0"
     val slf4j = "1.7.25"
-    val akka = "2.8.0"
+    val akka = "2.8.6"
     val log4j = "2.20.0"
     val disruptor = "3.4.4"
     val barcode4j = "2.1"

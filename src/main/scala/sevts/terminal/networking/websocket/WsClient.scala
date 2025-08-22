@@ -32,11 +32,14 @@ import java.security.cert.{CertificateFactory, X509Certificate}
 import java.nio.file.{Files, Paths}
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, EnumerationHasAsScala}
 import scala.util.{Failure, Success}
+import ru.CryptoPro.JCP.ASN.PKIX1Explicit88.Extension
+import ru.CryptoPro.JCP.JCP
+import ru.CryptoPro.JCP.Random.BioRandomConsole
+import ru.CryptoPro.JCPRequest.GostCertificateRequest
+import ru.CryptoPro.ssl.Provider
 
-import ru.CryptoPro.JCP.ASN.PKIX1Explicit88.Extension;
-import ru.CryptoPro.JCP.JCP;
-import ru.CryptoPro.JCP.Random.BioRandomConsole;
-import ru.CryptoPro.JCPRequest.GostCertificateRequest;
+import java.net.URI
+import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 
 
 object WsClient {
@@ -60,113 +63,46 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
 
   // Create GOST SSL context
   private def createGostSslContext(): SSLContext = {
-    val settings = injector.settings
-
-    try {
-      // В начале создания SSLContext
-      Security.setProperty("ssl.KeyManagerFactory.algorithm", "GostX509"); // ГОСТ алгоритм
-      Security.setProperty("ssl.TrustManagerFactory.algorithm", "GostX509"); // ГОСТ алгоритм
-      Security.setProperty("ssl.SocketFactory.provider", "ru.CryptoPro.ssl.SSLSocketFactoryImpl"); // задаем реализацию сокетов с ГОСТ алгоритмами
-      Security.setProperty("ssl.ServerSocketFactory.provider", "ru.CryptoPro.ssl.SSLServerSocketFactoryImpl"); // задаем реализацию сокетов сервера с ГОСТ алгоритмами
-      System.setProperty("javax.net.ssl.trustStoreType", "CertStore"); // может быть другой тип
-      System.setProperty("javax.net.ssl.trustStoreProvider", "JCP"); // может быть другой провайдер
-      System.setProperty("javax.net.ssl.keyStoreType", "HDIMAGE"); // может быть другой тип
-      System.setProperty("javax.net.ssl.keyStoreProvider", "JCSP"); // может быть другой провайдер
-      System.setProperty("ngate_set_jcsp_if_gost", "true");
-      System.setProperty("ru.CryptoPro.defaultSSLProv", "JCSP");
-
-      if (Security.getProvider("JCP") == null) {
-        Security.addProvider(new JCP())
-      }
+    System.setProperty("com.sun.security.enableCRLDP", "true")
+    System.setProperty("com.ibm.security.enableCRLDP", "true")
 
 
-      logger.info(s"Providers: ${Security.getProviders().map(_.getName).mkString(", ")}")
+    Security.addProvider(new JCP())
+    Security.addProvider(new ru.CryptoPro.ssl.Provider())
+    Security.addProvider(new ru.CryptoPro.Crypto.CryptoProvider())
+    Security.addProvider(new ru.CryptoPro.reprov.RevCheck())
 
-      val trustStore = KeyStore.getInstance(JCP.HD_STORE_NAME)
-      trustStore.load(null, null)
-
-      val certFactory = CertificateFactory.getInstance("X.509")
-
-      def loadCertificate(certPath: String): Unit = {
-        val resourceStream = Try(getClass.getClassLoader.getResourceAsStream(certPath))
-        resourceStream match {
-          case Success(stream) if stream != null =>
-            Using.resource(stream) { inputStream =>
-              if (certPath.endsWith(".p7b")) {
-                logger.info(s"Loading PKCS#7 certificate from resource: $certPath")
-                val certs = certFactory.generateCertificates(inputStream)
-                certs.forEach { cert =>
-                  val alias = s"gost-cert-${cert.getSubjectX500Principal.getName}"
-                  trustStore.setCertificateEntry(alias, cert)
-                  logger.info(s"Added PKCS#7 certificate: $alias")
-                }
-              } else {
-                logger.info(s"Loading certificate from resource: $certPath")
-                val cert = certFactory.generateCertificate(inputStream)
-                trustStore.setCertificateEntry(s"gost-cert-${cert.getSubjectX500Principal.getName}", cert)
-                logger.info(s"Added certificate from resource: $certPath")
-              }
-            }
-          case _ =>
-            logger.warn(s"Certificate resource not found: $certPath")
-        }
-      }
-
-      List(
-        settings.ssl.gostCertPath,
-        settings.ssl.gostP7bPath,
-        settings.ssl.gostRootCertPath
-      ).foreach(loadCertificate)
-
-
-      val tmf =  TrustManagerFactory.getInstance(
-        TrustManagerFactory.getDefaultAlgorithm()
-      )
-      tmf.init(trustStore)
-
-      val sslContext =  SSLContext.getInstance("GostTLSv1.2", "JCP")// протокол TLS v.1.2
-      sslContext.init(null, tmf.getTrustManagers, new SecureRandom())
-
-      val params = sslContext.getDefaultSSLParameters
-      params.setProtocols(Array("GostTLSv1.2", "GostTLSv1.3"))
-
-      // Try more compatible cipher suites
-      val cipherSuites = Array(
-        // Основные GOST-шифры (из вашего списка)
-        "TLS_GOSTR341112_256_WITH_KUZNYECHIK_CTR_OMAC",
-      // Кузнечик
-      "TLS_GOSTR341112_256_WITH_MAGMA_CTR_OMAC",
-      // Магма
-      // Стандартные ГОСТ (если поддерживаются)
-      "TLS_GOSTR341001_WITH_28147_CNT_MD5",
-      // ГОСТ 28147-89
-      // Совместимые алгоритмы
-      "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
-      "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-      // Резервные варианты
-      "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384"
-      ).filter(sslContext.getSupportedSSLParameters.getCipherSuites.contains)
-
-      logger.info(s"Supported GOST cipher suites: ${cipherSuites.mkString(", ")}")
-      if (cipherSuites.isEmpty) {
-        sslContext.createSSLEngine().setEnabledCipherSuites(cipherSuites)
-        logger.warn("No supported GOST cipher suites found, using default ones")
-        params.setCipherSuites(sslContext.getSupportedSSLParameters.getCipherSuites)
-      } else {
-        params.setCipherSuites(cipherSuites)
-      }
-
-      trustStore.aliases().asScala.foreach { alias =>
-        val cert = trustStore.getCertificate(alias)
-        logger.info(s"Trusted cert: $alias - ${cert.getSubjectX500Principal}")
-      }
-      sslContext
-    } catch {
-      case e: Exception =>
-        logger.error(s"Error creating GOST SSL context: ${e.getMessage}", e)
-        throw e
+    def getGostKeyManagers() = {
+      val factory = KeyManagerFactory.getInstance("GostX509")
+      val pfxStore =  KeyStore.getInstance(JCP.HD_STORE_NAME)
+      pfxStore.load(null, null)
+      val keyPassword = injector.settings.ssl.keystorePassword
+      factory.init(pfxStore, keyPassword.toCharArray)
+      factory.getKeyManagers
     }
+
+
+    def getGostTrustManager() = {
+      val trustStore = KeyStore.getInstance(JCP.CERT_STORE_NAME, "JCP")
+      val tsPath = injector.settings.ssl.truststorePath
+      val tsPassword = injector.settings.ssl.truststorePassword
+      if (tsPath.trim.isEmpty) throw new IllegalStateException("platform5.server.remote.ssl.truststorePath is not configured")
+      if (tsPassword.isEmpty) throw new IllegalStateException("platform5.server.remote.ssl.truststorePassword is not configured")
+      trustStore.load(new FileInputStream(tsPath), tsPassword.toCharArray)
+      val factory = TrustManagerFactory.getInstance("GostX509")
+      factory.init(trustStore)
+      factory.getTrustManagers
+    }
+
+
+    val sslCtx = SSLContext.getInstance("GostTLSv1.2", "JTLS"); // Защищенный контекст
+    sslCtx.init(getGostKeyManagers(), getGostTrustManager(), null)
+
+
+    logger.info(s"Supported GOST cipher suites: ${sslCtx.getSupportedSSLParameters.getCipherSuites.mkString(", ")}")
+    sslCtx
   }
+
 
   def peekMatValue[T, M](src: Source[T, M]): (Source[T, M], Future[M]) = {
     val p = Promise[M]

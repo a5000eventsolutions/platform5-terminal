@@ -320,11 +320,6 @@ class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
     val connectionType = Try(config.getString("platform5.server.remote.ssl.connectionType")).getOrElse("regular")
     val useGost = connectionType.toLowerCase == "gost"
 
-    // Paths to GOST certificates (relative to resources)
-    val gostCertPath = "gost-certs/2035gost.reg.events.crt"
-    val gostP7bPath = "gost-certs/certnew.p7b"
-    val gostRootCertPath = "gost-certs/Тестовый УЦ ООО _КРИПТО-ПРО_.crt"
-
     // For future use if client certificates are needed
     val keystorePath = Try(config.getString("platform5.server.remote.ssl.keystorePath")).getOrElse("")
     val keystorePassword = Try(config.getString("platform5.server.remote.ssl.keystorePassword")).getOrElse("")
