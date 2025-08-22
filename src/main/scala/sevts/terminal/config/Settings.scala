@@ -320,11 +320,16 @@ class Settings( config: Config = ConfigFactory.load() ) extends LazyLogging {
     val connectionType = Try(config.getString("platform5.server.remote.ssl.connectionType")).getOrElse("regular")
     val useGost = connectionType.toLowerCase == "gost"
 
+    // Single flag to enable CRLDP for Sun and IBM implementations (defaults to false)
+    val enableCRLDP = Try(config.getBoolean("platform5.server.remote.ssl.enableCRLDP")).getOrElse(false)
+
     // For future use if client certificates are needed
     val keystorePath = Try(config.getString("platform5.server.remote.ssl.keystorePath")).getOrElse("")
     val keystorePassword = Try(config.getString("platform5.server.remote.ssl.keystorePassword")).getOrElse("")
-    val truststorePath = Try(config.getString("platform5.server.remote.ssl.truststorePath")).getOrElse("")
-    val truststorePassword = Try(config.getString("platform5.server.remote.ssl.truststorePassword")).getOrElse("")
+
+    // GOST trust chain (PKCS#7) source selection
+    val gostP7bFromResource = Try(config.getBoolean("platform5.server.remote.ssl.gostP7b.fromResource")).getOrElse(true)
+    val gostP7bFilePath = Try(config.getString("platform5.server.remote.ssl.gostP7b.filePath")).getOrElse("")
   }
 
   val accessControlEnabled = config.getBoolean("platform5.terminal.accessControlEnabled")

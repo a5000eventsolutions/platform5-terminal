@@ -17,15 +17,18 @@ import sevts.server.domain.FailureType
 import sevts.server.utils.AkkaOps
 import sevts.terminal.Injector
 import sevts.terminal.networking.websocket.WsClient._
+import sevts.terminal.networking.ssl.GostSslContextFactory
 
-import java.io.FileInputStream
+import java.io.{FileInputStream, InputStream}
+import java.security.cert.{Certificate, CertificateFactory}
 import java.security.{KeyStore, Security}
+import java.util
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.control.NonFatal
-
+import scala.jdk.CollectionConverters._
 
 object WsClient {
 
@@ -48,45 +51,6 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
   implicit val system = context.system
   implicit val ec = context.dispatcher
 
-  // Create GOST SSL context
-  private def createGostSslContext(): SSLContext = {
-    System.setProperty("com.sun.security.enableCRLDP", "true")
-    System.setProperty("com.ibm.security.enableCRLDP", "true")
-
-
-    Security.addProvider(new JCP())
-    Security.addProvider(new ru.CryptoPro.ssl.Provider())
-    Security.addProvider(new ru.CryptoPro.Crypto.CryptoProvider())
-    Security.addProvider(new ru.CryptoPro.reprov.RevCheck())
-
-    def getGostKeyManagers() = {
-      val factory = KeyManagerFactory.getInstance("GostX509")
-      val pfxStore = KeyStore.getInstance(JCP.HD_STORE_NAME)
-      pfxStore.load(null, null)
-      val keyPassword = injector.settings.ssl.keystorePassword
-      factory.init(pfxStore, keyPassword.toCharArray)
-      factory.getKeyManagers
-    }
-
-    def getGostTrustManager() = {
-      val trustStore = KeyStore.getInstance(JCP.CERT_STORE_NAME, "JCP")
-      val tsPath = injector.settings.ssl.truststorePath
-      val tsPassword = injector.settings.ssl.truststorePassword
-      if (tsPath.trim.isEmpty) throw new IllegalStateException("platform5.server.remote.ssl.truststorePath is not configured")
-      if (tsPassword.isEmpty) throw new IllegalStateException("platform5.server.remote.ssl.truststorePassword is not configured")
-      trustStore.load(new FileInputStream(tsPath), tsPassword.toCharArray)
-      val factory = TrustManagerFactory.getInstance("GostX509")
-      factory.init(trustStore)
-      factory.getTrustManagers
-    }
-
-    val sslCtx = SSLContext.getInstance("GostTLSv1.2", "JTLS"); // Защищенный контекст
-    sslCtx.init(getGostKeyManagers(), getGostTrustManager(), null)
-
-
-    logger.info(s"Supported GOST cipher suites: ${sslCtx.getSupportedSSLParameters.getCipherSuites.mkString(", ")}")
-    sslCtx
-  }
 
 
   def peekMatValue[T, M](src: Source[T, M]): (Source[T, M], Future[M]) = {
@@ -107,7 +71,7 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
   val sslContextOpt = if (injector.settings.ssl.useGost) {
     try {
       logger.info("Creating GOST SSL context for WebSocket connection")
-      Some(createGostSslContext())
+      Some(GostSslContextFactory(injector).create())
     } catch {
       case e: Exception =>
         logger.error(s"Error creating GOST SSL context: ${e.getMessage}", e)

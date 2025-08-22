@@ -1,3 +1,5 @@
+import NativePackagerHelper.*
+import sbt.Keys.*
 
 version := "1.0"
 
@@ -35,7 +37,7 @@ lazy val commonSettings = Seq(
 
 
 lazy val terminal = (project in file("./"))
-  .settings( name := "platform5-terminal",
+  .settings(name := "platform5-terminal",
     organization := "sevts.platform5",
     version := "1.0"
   )
@@ -49,19 +51,24 @@ lazy val terminal = (project in file("./"))
   .settings(
     Universal / mappings += {
       ((Compile / resourceDirectory).value / "application.conf") -> "conf/application.conf"
+    },
+    Universal / mappings ++= {
+      val rootDir = baseDirectory.value
+      val libDir = rootDir / "lib"
+      if (libDir.exists) contentOf(libDir).map { case (f, p) => (f, s"JCPInstall/$p") } else Seq.empty
     }
   )
-  .settings( commonSettings: _* )
+  .settings(commonSettings: _*)
   .settings(
     libraryDependencies := Dependencies.terminal.value,
-   // dependencyOverrides +=  "scala-lang.modules" % "scala-xml_2.12" % "1.0.6",
-    dependencyOverrides +=  "javax.activation" % "activation" % "1.1.1"
+    // dependencyOverrides +=  "scala-lang.modules" % "scala-xml_2.12" % "1.0.6",
+    dependencyOverrides += "javax.activation" % "activation" % "1.1.1"
   )
- // .dependsOn(platform5Project)
+  // .dependsOn(platform5Project)
   .dependsOn(utilsRef)
   .dependsOn(protocolRef)
   .dependsOn(domainRef)
   .dependsOn(coreRef)
-  //.dependsOn(pl5Ref)
+//.dependsOn(pl5Ref)
 
 unmanagedJars in Compile += file("lib/")
