@@ -1,53 +1,42 @@
 package sevts.terminal.networking.websocket
 
-import akka.{Done, NotUsed}
 import akka.actor._
-import akka.http.scaladsl.Http
+import akka.http.scaladsl.{ConnectionContext, Http}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.ws._
-import akka.http.scaladsl.ConnectionContext
+import akka.pattern._
 import akka.stream._
+import akka.stream.scaladsl.GraphDSL.Builder
 import akka.stream.scaladsl._
 import akka.util.ByteString
+import akka.{Done, NotUsed}
 import com.typesafe.scalalogging.LazyLogging
-import sevts.terminal.Injector
-import sevts.terminal.networking.websocket.WsClient._
-
-import scala.concurrent._
-import scala.concurrent.duration._
-import akka.pattern._
-import akka.stream.scaladsl.GraphDSL.Builder
-import com.typesafe.sslconfig.ssl.certificate2X509Certificate
+import ru.CryptoPro.JCP.JCP
 import sevts.remote.protocol.Protocol
 import sevts.server.domain.FailureType
 import sevts.server.utils.AkkaOps
+import sevts.terminal.Injector
+import sevts.terminal.networking.websocket.WsClient._
 
+import java.io.FileInputStream
+import java.security.{KeyStore, Security}
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
+import scala.concurrent._
+import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.{Try, Using}
 import scala.util.control.NonFatal
-import java.security.{KeyStore, Provider, SecureRandom, Security}
-import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManager, TrustManagerFactory, X509TrustManager}
-import java.io.{File, FileInputStream, InputStream}
-import java.security.cert.{CertificateFactory, X509Certificate}
-import java.nio.file.{Files, Paths}
-import scala.jdk.CollectionConverters.{CollectionHasAsScala, EnumerationHasAsScala}
-import scala.util.{Failure, Success}
-import ru.CryptoPro.JCP.ASN.PKIX1Explicit88.Extension
-import ru.CryptoPro.JCP.JCP
-import ru.CryptoPro.JCP.Random.BioRandomConsole
-import ru.CryptoPro.JCPRequest.GostCertificateRequest
-import ru.CryptoPro.ssl.Provider
-
-import java.net.URI
-import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 
 
 object WsClient {
 
   case class InMessage(bytes: ByteString)
+
   case class SendMessage(bytes: ByteString)
+
   case class WSException(e: Throwable)
+
   case object Connected
+
   case object Disconnected
 
   def props(injector: Injector, parent: ActorRef): Props =
@@ -55,8 +44,6 @@ object WsClient {
 }
 
 class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogging {
-
-  import sevts.server.protocol._
 
   implicit val system = context.system
   implicit val ec = context.dispatcher
@@ -74,13 +61,12 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
 
     def getGostKeyManagers() = {
       val factory = KeyManagerFactory.getInstance("GostX509")
-      val pfxStore =  KeyStore.getInstance(JCP.HD_STORE_NAME)
+      val pfxStore = KeyStore.getInstance(JCP.HD_STORE_NAME)
       pfxStore.load(null, null)
       val keyPassword = injector.settings.ssl.keystorePassword
       factory.init(pfxStore, keyPassword.toCharArray)
       factory.getKeyManagers
     }
-
 
     def getGostTrustManager() = {
       val trustStore = KeyStore.getInstance(JCP.CERT_STORE_NAME, "JCP")
@@ -93,7 +79,6 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
       factory.init(trustStore)
       factory.getTrustManagers
     }
-
 
     val sslCtx = SSLContext.getInstance("GostTLSv1.2", "JTLS"); // Защищенный контекст
     sslCtx.init(getGostKeyManagers(), getGostTrustManager(), null)
@@ -192,7 +177,11 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
   }
 }
 
-class AkkaWsClient(injector: Injector, val webSocketUrl: String, parent: ActorRef, source: Source[BinaryMessage, NotUsed], sslContextOpt: Option[SSLContext] = None)
+class AkkaWsClient(injector: Injector,
+                   val webSocketUrl: String,
+                   parent: ActorRef,
+                   source: Source[BinaryMessage, NotUsed],
+                   sslContextOpt: Option[SSLContext] = None)
   extends LazyLogging with AkkaOps {
 
   val handlerFlow = Flow.fromSinkAndSource(Sink.actorRef[Message](parent, "connection closed"), source)
@@ -215,8 +204,8 @@ class AkkaWsClient(injector: Injector, val webSocketUrl: String, parent: ActorRe
   }
 
   private lazy val webSocketUpgrade = RunnableGraph.fromGraph[(Future[WebSocketUpgradeResponse])](
-    GraphDSL.create[ClosedShape, Future[WebSocketUpgradeResponse]] (clientFlow)
-      { implicit builder: Builder[Future[WebSocketUpgradeResponse]] => wsFlow =>
+    GraphDSL.create[ClosedShape, Future[WebSocketUpgradeResponse]](clientFlow) { implicit builder: Builder[Future[WebSocketUpgradeResponse]] =>
+      wsFlow =>
         import GraphDSL.Implicits._
 
         val clientLoop = builder.add(handlerFlow)
@@ -224,21 +213,22 @@ class AkkaWsClient(injector: Injector, val webSocketUrl: String, parent: ActorRe
         wsFlow.in <~ clientLoop.out
 
         ClosedShape
-      }).run()
+    }).run()
 
 
   def connect(): Future[Done] = {
     logger.info(s"Attempting to connect to $webSocketUrl")
     webSocketUpgrade.flatMap {
-      upgrade => upgrade.response.status match {
-        case StatusCodes.SwitchingProtocols =>
-          logger.info(s"Client connected to $webSocketUrl")
-          Future.successful(Done)
-        case _ =>
-          logger.error(s"Connection failed: ${upgrade.response.status}")
-          // Remove the UpgradeFailureReason part if not available
-          Future.failed(FailureType.Exception(s"Connection failed: ${upgrade.response.status}"))
-      }
+      upgrade =>
+        upgrade.response.status match {
+          case StatusCodes.SwitchingProtocols =>
+            logger.info(s"Client connected to $webSocketUrl")
+            Future.successful(Done)
+          case _ =>
+            logger.error(s"Connection failed: ${upgrade.response.status}")
+            // Remove the UpgradeFailureReason part if not available
+            Future.failed(FailureType.Exception(s"Connection failed: ${upgrade.response.status}"))
+        }
     }.recoverWith {
       case ex: javax.net.ssl.SSLException =>
         logger.error(s"SSL handshake failed: ${ex.getMessage}")

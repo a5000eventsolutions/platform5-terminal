@@ -9,7 +9,6 @@ import sevts.terminal.actors.scanners.ScannersActor
 import sevts.terminal.actors.tripod.TripodControlActor
 import sevts.terminal.actors.usbrelay.UsbRelayControlActor
 import sevts.terminal.config.Settings
-import sevts.terminal.networking.websocket.SSLTest
 import sevts.terminal.platform5.RemoteTransportActor
 
 object Injector {
@@ -38,8 +37,6 @@ trait Injector extends LazyLogging {
   val usbRelayActor = if(settings.usbRelay.enabled) {
     system.actorOf(UsbRelayControlActor.props(this), name = "usbrelay-actor")
   }
-
-  //val test = SSLTest.connect()
 
   val endpointActor = system.actorOf(RemoteTransportActor.props(this), name = "remote-transport-actor")
 }
