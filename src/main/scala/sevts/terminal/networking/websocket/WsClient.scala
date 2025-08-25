@@ -1,36 +1,45 @@
 package sevts.terminal.networking.websocket
 
-import akka.{Done, NotUsed}
 import akka.actor._
-import akka.http.scaladsl.Http
+import akka.http.scaladsl.{ConnectionContext, Http}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.ws._
+import akka.pattern._
 import akka.stream._
+import akka.stream.scaladsl.GraphDSL.Builder
 import akka.stream.scaladsl._
 import akka.util.ByteString
+import akka.{Done, NotUsed}
 import com.typesafe.scalalogging.LazyLogging
-import sevts.terminal.Injector
-import sevts.terminal.networking.websocket.WsClient._
-
-import scala.concurrent._
-import scala.concurrent.duration._
-import akka.pattern._
-import akka.stream.scaladsl.GraphDSL.Builder
+import ru.CryptoPro.JCP.JCP
 import sevts.remote.protocol.Protocol
 import sevts.server.domain.FailureType
 import sevts.server.utils.AkkaOps
+import sevts.terminal.Injector
+import sevts.terminal.networking.websocket.WsClient._
+import sevts.terminal.networking.ssl.GostSslContextFactory
 
+import java.io.{FileInputStream, InputStream}
+import java.security.cert.{Certificate, CertificateFactory}
+import java.security.{KeyStore, Security}
+import java.util
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
+import scala.concurrent._
+import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.Try
 import scala.util.control.NonFatal
-
+import scala.jdk.CollectionConverters._
 
 object WsClient {
 
   case class InMessage(bytes: ByteString)
+
   case class SendMessage(bytes: ByteString)
+
   case class WSException(e: Throwable)
+
   case object Connected
+
   case object Disconnected
 
   def props(injector: Injector, parent: ActorRef): Props =
@@ -39,10 +48,10 @@ object WsClient {
 
 class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogging {
 
-  import sevts.server.protocol._
-
   implicit val system = context.system
   implicit val ec = context.dispatcher
+
+
 
   def peekMatValue[T, M](src: Source[T, M]): (Source[T, M], Future[M]) = {
     val p = Promise[M]
@@ -57,7 +66,22 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
   futureQueue.map { r => self ! r }
 
   val url = s"${injector.settings.serverHost}/terminalws"
-  val clientFuture = new AkkaWsClient(injector, url, self, queueSource.asInstanceOf[Source[BinaryMessage, NotUsed]]).connect()
+
+  // Create GOST SSL context if needed
+  val sslContextOpt = if (injector.settings.ssl.useGost) {
+    try {
+      logger.info("Creating GOST SSL context for WebSocket connection")
+      Some(GostSslContextFactory(injector).create())
+    } catch {
+      case e: Exception =>
+        logger.error(s"Error creating GOST SSL context: ${e.getMessage}", e)
+        None
+    }
+  } else {
+    None
+  }
+
+  val clientFuture = new AkkaWsClient(injector, url, self, queueSource.asInstanceOf[Source[BinaryMessage, NotUsed]], sslContextOpt).connect()
   clientFuture.map {
     case Done => parent ! Connected
     case e =>
@@ -117,7 +141,11 @@ class WsClient(injector: Injector, parent: ActorRef) extends Actor with LazyLogg
   }
 }
 
-class AkkaWsClient(injector: Injector, val webSocketUrl: String, parent: ActorRef, source: Source[BinaryMessage, NotUsed])
+class AkkaWsClient(injector: Injector,
+                   val webSocketUrl: String,
+                   parent: ActorRef,
+                   source: Source[BinaryMessage, NotUsed],
+                   sslContextOpt: Option[SSLContext] = None)
   extends LazyLogging with AkkaOps {
 
   val handlerFlow = Flow.fromSinkAndSource(Sink.actorRef[Message](parent, "connection closed"), source)
@@ -125,12 +153,23 @@ class AkkaWsClient(injector: Injector, val webSocketUrl: String, parent: ActorRe
   implicit val system = injector.system
   implicit val ec = system.dispatcher
 
-  private lazy val clientFlow: Flow[Message, Message, Future[WebSocketUpgradeResponse]] =
-    Http().webSocketClientFlow(WebSocketRequest(webSocketUrl))
+  private lazy val clientFlow: Flow[Message, Message, Future[WebSocketUpgradeResponse]] = {
+    sslContextOpt match {
+      case Some(sslContext) if webSocketUrl.startsWith("wss://") || injector.settings.ssl.useGost =>
+        // Use GOST SSL context for WebSocket connection
+        val httpsContext = ConnectionContext.httpsClient(sslContext)
+        logger.info("Using GOST SSL context for WebSocket connection")
+        Http().webSocketClientFlow(WebSocketRequest(webSocketUrl), httpsContext)
+      case _ =>
+        // Use default SSL context
+        logger.info("Using regular connection for WebSocket")
+        Http().webSocketClientFlow(WebSocketRequest(webSocketUrl))
+    }
+  }
 
   private lazy val webSocketUpgrade = RunnableGraph.fromGraph[(Future[WebSocketUpgradeResponse])](
-    GraphDSL.create[ClosedShape, Future[WebSocketUpgradeResponse]] (clientFlow)
-      { implicit builder: Builder[Future[WebSocketUpgradeResponse]] => wsFlow =>
+    GraphDSL.create[ClosedShape, Future[WebSocketUpgradeResponse]](clientFlow) { implicit builder: Builder[Future[WebSocketUpgradeResponse]] =>
+      wsFlow =>
         import GraphDSL.Implicits._
 
         val clientLoop = builder.add(handlerFlow)
@@ -138,22 +177,29 @@ class AkkaWsClient(injector: Injector, val webSocketUrl: String, parent: ActorRe
         wsFlow.in <~ clientLoop.out
 
         ClosedShape
-      }).run()
+    }).run()
 
 
   def connect(): Future[Done] = {
     logger.info(s"Attempting to connect to $webSocketUrl")
     webSocketUpgrade.flatMap {
-      upgrade => upgrade.response.status match {
-        case StatusCodes.SwitchingProtocols =>
-          logger.info(s"Client connected to $webSocketUrl")
-          Future.successful(Done)
-        case _ =>
-          logger.error(s"Connection failed: ${upgrade.response.status}")
-          Future.failed(FailureType.Exception(s"Connection failed: ${upgrade.response.status}"))
-      }
+      upgrade =>
+        upgrade.response.status match {
+          case StatusCodes.SwitchingProtocols =>
+            logger.info(s"Client connected to $webSocketUrl")
+            Future.successful(Done)
+          case _ =>
+            logger.error(s"Connection failed: ${upgrade.response.status}")
+            // Remove the UpgradeFailureReason part if not available
+            Future.failed(FailureType.Exception(s"Connection failed: ${upgrade.response.status}"))
+        }
+    }.recoverWith {
+      case ex: javax.net.ssl.SSLException =>
+        logger.error(s"SSL handshake failed: ${ex.getMessage}")
+        Future.failed(FailureType.Exception(s"SSL handshake failed: ${ex.getMessage}"))
+      case ex =>
+        logger.error(s"Connection failed: ${ex.getMessage}")
+        Future.failed(FailureType.Exception(s"Connection failed: ${ex.getMessage}"))
     }
   }
 }
-
-
