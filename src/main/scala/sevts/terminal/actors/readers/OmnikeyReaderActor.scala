@@ -1,8 +1,5 @@
 package sevts.terminal.actors.readers
 
-import java.io.IOException
-import java.util.concurrent.TimeUnit
-import javax.smartcardio._
 import akka.actor.{Actor, ActorRef, Props}
 import com.typesafe.scalalogging.LazyLogging
 import sevts.remote.protocol.Protocol.ServerMessage
@@ -10,7 +7,10 @@ import sevts.server.protocol.TerminalEvent.WriteRfidUserMemoryEvent
 import sevts.terminal.audio.Audio
 import sevts.terminal.config.Settings.DeviceConfig
 
-import java.nio.{ByteBuffer, IntBuffer}
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.util.concurrent.TimeUnit
+import javax.smartcardio._
 import scala.annotation.tailrec
 import scala.concurrent.blocking
 import scala.concurrent.duration._
@@ -22,21 +22,29 @@ object OmnikeyReaderActor {
   def props(listener: ActorRef, device: DeviceConfig) = Props(classOf[OmnikeyReaderActor], listener, device)
 
   sealed trait Command
+
   object Command {
     //case class DataReceived(port: SerialPort) extends Command
     case class StartTerminalRead(terminal: CardTerminal) extends Command
+
     case class ReadCard(terminal: CardTerminal) extends Command
+
     case object ReconnectCard extends Command
   }
 
   case class SerialDataReceived(portName: String, deviceName: String, data: String)
 
   sealed trait Response
+
   object Response {
     case class PortOpened(name: String) extends Response
+
     case class PortClosed(name: String) extends Response
+
     case object Subscribed extends Response
+
     case object UnSubscribed extends Response
+
     case class Error(msg: String) extends Response
   }
 
@@ -98,7 +106,7 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
     case Command.ReadCard(terminal) =>
       tryReadCard(terminal).foreach { result =>
         val needConvert = Option(device.parameters.getBoolean("convertToDec")).getOrElse(false)
-        val converted = if(needConvert) convertToDec(result) else result
+        val converted = if (needConvert) convertToDec(result) else result
         logger.info(s"Read value: $result, converted: $converted")
         listener ! ReadersActor.DeviceEvent.DataReceived(device.name, converted.stripSuffix("9000"))
         context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
@@ -114,9 +122,15 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
   }
 
   private def convertToDec(data: String): String = {
-    val hex = data.replace(" ", "").replace(":", "").replace("-", "")
+    val hex = data
     val bytes = hex.grouped(2).toArray.map(Integer.parseInt(_, 16).toByte)
-    val intBuffer = ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+    val intBuffer = Option(device.parameters.getString("hexEndianess"))
+      .getOrElse("little-endian") match {
+          case "big-endian" =>
+            ByteBuffer.wrap(bytes)
+          case "little-endian" =>
+            ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+        }
     val intValue = intBuffer.getInt()
     val result = Integer.toHexString(intValue)
     result
