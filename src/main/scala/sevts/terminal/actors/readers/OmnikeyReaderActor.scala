@@ -105,10 +105,11 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
 
     case Command.ReadCard(terminal) =>
       tryReadCard(terminal).foreach { result =>
+        val stripped = result.stripSuffix("9000")
         val needConvert = Option(device.parameters.getBoolean("convertToDec")).getOrElse(false)
-        val converted = if (needConvert) convertToDec(result) else result
+        val converted = if (needConvert) convertToDec(stripped) else stripped
         logger.info(s"Read value: $result, converted: $converted")
-        listener ! ReadersActor.DeviceEvent.DataReceived(device.name, converted.stripSuffix("9000"))
+        listener ! ReadersActor.DeviceEvent.DataReceived(device.name, converted)
         context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
       }
 
