@@ -132,7 +132,7 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
             ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN)
         }
     val intValue = intBuffer.getInt()
-    val result = Integer.toHexString(intValue)
+    val result = intValue.toString
     result
   }
 
