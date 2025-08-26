@@ -97,8 +97,10 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
 
     case Command.ReadCard(terminal) =>
       tryReadCard(terminal).foreach { result =>
-        logger.info(s"Read value: $result")
-        listener ! ReadersActor.DeviceEvent.DataReceived(device.name, result.stripSuffix("9000"))
+        val needConvert = Option(device.parameters.getBoolean("convertToDec")).getOrElse(false)
+        val converted = if(needConvert) convertToDec(result) else result
+        logger.info(s"Read value: $result, converted: $converted")
+        listener ! ReadersActor.DeviceEvent.DataReceived(device.name, converted.stripSuffix("9000"))
         context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
       }
 
@@ -111,6 +113,14 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
       logger.error(s"Unknown message received ${msg.toString}")
   }
 
+  private def convertToDec(data: String): String = {
+    val hex = data.replace(" ", "").replace(":", "").replace("-", "")
+    val bytes = hex.grouped(2).toArray.map(Integer.parseInt(_, 16).toByte)
+    val intBuffer = ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+    val intValue = intBuffer.getInt()
+    val result = Integer.toHexString(intValue)
+    result
+  }
 
   def receive = {
 
