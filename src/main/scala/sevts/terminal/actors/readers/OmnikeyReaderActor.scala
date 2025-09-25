@@ -21,6 +21,27 @@ import scala.util.control.NonFatal
 object OmnikeyReaderActor {
   def props(listener: ActorRef, device: DeviceConfig) = Props(classOf[OmnikeyReaderActor], listener, device)
 
+  // Pure utility to convert HEX string to decimal string with endianness.
+  // Exposed for testing.
+  def convertToDec(data: String, endian: String): String = {
+    val hex = data
+    val bytes = hex.grouped(2).toArray.map(Integer.parseInt(_, 16).toByte)
+    val order = endian match {
+      case "big-endian"     => java.nio.ByteOrder.BIG_ENDIAN
+      case "little-endian"  => java.nio.ByteOrder.LITTLE_ENDIAN
+      case _                 => java.nio.ByteOrder.LITTLE_ENDIAN
+    }
+    // Если little-endian, нужно перевернуть байты для BigInteger
+    val bytesForBigInt = if (order == java.nio.ByteOrder.LITTLE_ENDIAN) {
+      bytes.reverse
+    } else {
+      bytes
+    }
+
+    val bigInt = new java.math.BigInteger(1, bytesForBigInt) // 1 для положительного числа
+    bigInt.toString
+  }
+
   sealed trait Command
 
   object Command {
@@ -107,7 +128,7 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
       tryReadCard(terminal).foreach { result =>
         val stripped = result.stripSuffix("9000")
         val needConvert = Option(device.parameters.getBoolean("convertToDec")).getOrElse(false)
-        val converted = if (needConvert) convertToDec(stripped) else stripped
+        val converted = if (needConvert) convertToDec(stripped, endianness) else stripped
         logger.info(s"Read value: $result, converted: $converted")
         listener ! ReadersActor.DeviceEvent.DataReceived(device.name, converted)
         context.system.scheduler.scheduleOnce(delay, self, Command.ReadCard(terminal))
@@ -122,19 +143,9 @@ class OmnikeyReaderActor(listener: ActorRef, device: DeviceConfig)
       logger.error(s"Unknown message received ${msg.toString}")
   }
 
-  private def convertToDec(data: String): String = {
-    val hex = data
-    val bytes = hex.grouped(2).toArray.map(Integer.parseInt(_, 16).toByte)
-    val intBuffer = Option(device.parameters.getString("hexEndianess"))
-      .getOrElse("little-endian") match {
-          case "big-endian" =>
-            ByteBuffer.wrap(bytes)
-          case "little-endian" =>
-            ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN)
-        }
-    val intValue = intBuffer.getInt()
-    val result = intValue.toString
-    result
+  def endianness: String = {
+    Option(device.parameters.getString("hexEndianess"))
+      .getOrElse("little-endian")
   }
 
   def receive = {
